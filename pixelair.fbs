@@ -1,0 +1,150 @@
+namespace PixelAir;
+
+file_identifier "PA01";
+
+table StringParameter {
+    label: string;
+    route: string;
+    type: string;
+    value: string;
+}
+
+table FloatParameter {
+    label: string;
+    route: string;
+    type: string;
+    value: float;
+}
+
+table BooleanParameter {
+    label: string;
+    route: string;
+    type: string;
+    value: bool;
+}
+
+table IntParameter {
+    label: string;
+    route: string;
+    type: string;
+    value: int;
+}
+
+table Trigger {
+    label: string;
+    route: string;
+    type: string;
+}
+
+table Network {
+    macAddress: string;
+    ipAddress: string;
+    subnet: string;
+}
+
+table OTA {
+    updateAvailable: bool;
+    isExecutingOTA: bool;
+    executeUpdate: Trigger;
+    checkForUpdate: Trigger;
+}
+
+table Audio {
+    filter: FloatParameter;
+    release: FloatParameter;
+    gain: FloatParameter;
+    attack: FloatParameter;
+}
+
+table Notification {
+    notify: Trigger;
+}
+
+table Notifications {
+    highlight: BooleanParameter;
+    failure: Notification;
+    info: Notification;
+    success: Notification;
+}
+
+table LightSensorSettings {
+    enabled: BooleanParameter;
+}
+
+table Clock {
+    usesDaylightSavings: BooleanParameter;
+    utcOffset: IntParameter;
+}
+
+table Engine {
+    brightness: FloatParameter;
+    isDisplaying: BooleanParameter;
+    reboot: Trigger;
+    mode: IntParameter;
+    resetWiFi: Trigger;
+    offEvent: Schedule;
+    onEvent: Schedule;
+    autoMode: AutoMode;
+    sceneMode: SceneMode;
+    manualMode: ManualMode;
+}
+
+table Dashboard {
+    parameters: [FloatParameter];
+}
+
+table Palette {
+    saturation: FloatParameter;
+    hue: FloatParameter;
+}
+
+table AutoMode {
+    palette: Palette;
+}
+
+table Scene {
+    label: string;
+    index: int;
+    loadedAnimationIndex: int;
+    animations: [string];
+    dashboard: Dashboard;
+    activeAnimationIndex: IntParameter;
+    palette: Palette;
+    schedule: Schedule;
+}
+
+table SceneMode {
+    activeSceneIndex: IntParameter;
+    scenes: [Scene];
+    palette: Palette;
+}
+
+table ManualMode {
+    loadedAnimationIndex: int;
+    animations: [string];
+    dashboard: Dashboard;
+    activeAnimationIndex: IntParameter;
+    palette: Palette;
+}
+
+table Schedule {
+    timeOfDayInSeconds: IntParameter;
+    enabled: BooleanParameter;
+}
+
+table PixelAirDevice {
+    protocol: string;
+    version: string;
+    model: string;
+    minMobileAppVersion: string;
+    serialNumber: string;
+    rssi: int;
+    nickname: StringParameter;
+    network: Network;
+    ota: OTA;
+    audio: Audio;
+    notifications: Notifications;
+    lightSensor: LightSensorSettings;
+    clock: Clock;
+    engine: Engine;
+}

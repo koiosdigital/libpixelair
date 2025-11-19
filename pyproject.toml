@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "libpixelair"
+version = "0.1.5"
+description = ""
+authors = ["Aiden Vigue <aiden@vigue.me>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+python-osc = "^1.8.3"
+flatbuffers = "^25.2.10"
+netifaces = "^0.11.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
