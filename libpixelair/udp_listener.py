@@ -9,12 +9,13 @@ The listener is designed to be shared across multiple components (discovery,
 device state updates, etc.) and uses asyncio for non-blocking operation.
 """
 
+from __future__ import annotations
+
 import asyncio
 import socket
 import logging
-from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Set, Tuple
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 
 # Default port for receiving PixelAir device responses
@@ -48,7 +49,7 @@ class PacketHandler(ABC):
     """
 
     @abstractmethod
-    async def handle_packet(self, data: bytes, source_address: Tuple[str, int]) -> bool:
+    async def handle_packet(self, data: bytes, source_address: tuple[str, int]) -> bool:
         """
         Handle an incoming UDP packet.
 
@@ -73,7 +74,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
 
     def __init__(
         self,
-        handlers: List[PacketHandler],
+        handlers: list[PacketHandler],
         logger: logging.Logger
     ):
         """
@@ -85,21 +86,21 @@ class UDPProtocol(asyncio.DatagramProtocol):
         """
         self._handlers = handlers
         self._logger = logger
-        self._transport: Optional[asyncio.DatagramTransport] = None
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._transport: asyncio.DatagramTransport | None = None
+        self._loop: asyncio.AbstractEventLoop | None = None
 
-    def connection_made(self, transport: asyncio.DatagramTransport) -> None:
+    def connection_made(self, transport: asyncio.transports.BaseTransport) -> None:
         """
         Called when the UDP socket is ready.
 
         Args:
             transport: The transport representing the UDP socket.
         """
-        self._transport = transport
+        self._transport = transport  # type: ignore[assignment]
         self._loop = asyncio.get_running_loop()
         self._logger.debug("UDP protocol connection established")
 
-    def datagram_received(self, data: bytes, addr: Tuple[str, int]) -> None:
+    def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
         """
         Called when a UDP datagram is received.
 
@@ -110,7 +111,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
         if self._loop is not None:
             self._loop.create_task(self._dispatch_packet(data, addr))
 
-    async def _dispatch_packet(self, data: bytes, addr: Tuple[str, int]) -> None:
+    async def _dispatch_packet(self, data: bytes, addr: tuple[str, int]) -> None:
         """
         Dispatch a packet to all registered handlers.
 
@@ -140,7 +141,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
         """
         self._logger.warning("UDP protocol error: %s", exc)
 
-    def connection_lost(self, exc: Optional[Exception]) -> None:
+    def connection_lost(self, exc: Exception | None) -> None:
         """
         Called when the connection is lost or closed.
 
@@ -195,10 +196,10 @@ class UDPListener:
         """
         self._port = port
         self._buffer_size = buffer_size
-        self._handlers: List[PacketHandler] = []
-        self._transport: Optional[asyncio.DatagramTransport] = None
-        self._protocol: Optional[UDPProtocol] = None
-        self._interfaces: List[NetworkInterface] = []
+        self._handlers: list[PacketHandler] = []
+        self._transport: asyncio.DatagramTransport | None = None
+        self._protocol: UDPProtocol | None = None
+        self._interfaces: list[NetworkInterface] = []
         self._running = False
         self._logger = logging.getLogger("pixelair.udp_listener")
 
@@ -213,7 +214,7 @@ class UDPListener:
         return self._running
 
     @property
-    def interfaces(self) -> List[NetworkInterface]:
+    def interfaces(self) -> list[NetworkInterface]:
         """
         Get the list of discovered network interfaces.
 
@@ -386,7 +387,7 @@ class UDPListener:
 
         return sent_count
 
-    def _discover_interfaces(self) -> List[NetworkInterface]:
+    def _discover_interfaces(self) -> list[NetworkInterface]:
         """
         Discover available network interfaces with broadcast capability.
 
@@ -394,7 +395,7 @@ class UDPListener:
             List of NetworkInterface objects for interfaces that support
             broadcast (i.e., not loopback).
         """
-        interfaces: List[NetworkInterface] = []
+        interfaces: list[NetworkInterface] = []
 
         try:
             import netifaces
@@ -431,7 +432,7 @@ class UDPListener:
 
         return interfaces
 
-    def _discover_interfaces_fallback(self) -> List[NetworkInterface]:
+    def _discover_interfaces_fallback(self) -> list[NetworkInterface]:
         """
         Fallback interface discovery using socket.
 
@@ -441,7 +442,7 @@ class UDPListener:
         Returns:
             List containing at most one NetworkInterface for the primary interface.
         """
-        interfaces: List[NetworkInterface] = []
+        interfaces: list[NetworkInterface] = []
 
         try:
             # Try to find primary interface by connecting to Google DNS
@@ -474,7 +475,12 @@ class UDPListener:
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
         """
         Async context manager exit.
 

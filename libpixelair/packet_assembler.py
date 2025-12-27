@@ -13,11 +13,12 @@ This module provides the PacketAssembler class that reassembles these
 fragments into complete payloads and invokes a callback when ready.
 """
 
+from __future__ import annotations
+
 import asyncio
-import time
 import logging
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Optional, Tuple, Awaitable, Union
+from collections.abc import Awaitable, Callable
 
 # Header byte that marks a fragmented packet
 FRAGMENT_HEADER_MARKER = 0x46  # 'F'
@@ -29,6 +30,17 @@ MIN_PACKET_SIZE = 4
 DEFAULT_FRAGMENT_TIMEOUT = 2.0
 
 
+def _get_monotonic_time() -> float:
+    """Get monotonic time from the event loop or fallback."""
+    try:
+        loop = asyncio.get_running_loop()
+        return loop.time()
+    except RuntimeError:
+        # No running loop, use monotonic clock directly
+        import time
+        return time.monotonic()
+
+
 @dataclass
 class FragmentBuffer:
     """
@@ -38,12 +50,12 @@ class FragmentBuffer:
         counter: The counter value grouping these fragments.
         total_fragments: Total number of fragments expected.
         fragments: Dictionary mapping fragment index to payload bytes.
-        created_at: Timestamp when this buffer was created.
+        created_at: Monotonic timestamp when this buffer was created.
     """
     counter: int
     total_fragments: int
-    fragments: Dict[int, bytes] = field(default_factory=dict)
-    created_at: float = field(default_factory=time.time)
+    fragments: dict[int, bytes] = field(default_factory=dict)
+    created_at: float = field(default_factory=_get_monotonic_time)
 
     def add_fragment(self, index: int, payload: bytes) -> bool:
         """
@@ -80,9 +92,9 @@ class FragmentBuffer:
         Returns:
             True if the buffer is older than the timeout.
         """
-        return time.time() - self.created_at > timeout
+        return _get_monotonic_time() - self.created_at > timeout
 
-    def assemble(self) -> Optional[bytes]:
+    def assemble(self) -> bytes | None:
         """
         Assemble all fragments into a complete payload.
 
@@ -93,13 +105,12 @@ class FragmentBuffer:
         if not self.is_complete():
             return None
 
-        payload = b""
-        for i in range(self.total_fragments):
-            if i not in self.fragments:
-                return None
-            payload += self.fragments[i]
-
-        return payload
+        # Use list join for O(n) assembly instead of O(n^2) concatenation
+        try:
+            parts = [self.fragments[i] for i in range(self.total_fragments)]
+            return b"".join(parts)
+        except KeyError:
+            return None
 
     @property
     def received_count(self) -> int:
@@ -113,10 +124,7 @@ class FragmentBuffer:
 
 
 # Type alias for the completion callback
-CompletionCallback = Union[
-    Callable[[bytes], None],
-    Callable[[bytes], Awaitable[None]]
-]
+type CompletionCallback = Callable[[bytes], None] | Callable[[bytes], Awaitable[None]]
 
 
 class PacketAssembler:
@@ -166,10 +174,10 @@ class PacketAssembler:
         self._cleanup_interval = cleanup_interval
 
         # Buffers keyed by (source_ip, counter)
-        self._buffers: Dict[Tuple[str, int], FragmentBuffer] = {}
+        self._buffers: dict[tuple[str, int], FragmentBuffer] = {}
         self._lock = asyncio.Lock()
 
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task[None] | None = None
         self._running = False
 
         self._logger = logging.getLogger("pixelair.packet_assembler")
@@ -190,7 +198,7 @@ class PacketAssembler:
         return len(self._buffers)
 
     @property
-    def stats(self) -> Dict[str, int]:
+    def stats(self) -> dict[str, int]:
         """
         Get assembler statistics.
 
@@ -247,7 +255,7 @@ class PacketAssembler:
     async def process_packet(
         self,
         data: bytes,
-        source_address: Tuple[str, int]
+        source_address: tuple[str, int]
     ) -> bool:
         """
         Process an incoming UDP packet.
@@ -450,7 +458,12 @@ class PacketAssembler:
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
         """
         Async context manager exit.
 

@@ -115,6 +115,7 @@ from .arp import (
     lookup_mac_by_ip,
     normalize_mac,
     get_arp_table,
+    warm_arp_cache,
     ArpEntry,
 )
 
@@ -159,5 +160,6 @@ __all__ = [
     "lookup_mac_by_ip",
     "normalize_mac",
     "get_arp_table",
+    "warm_arp_cache",
     "ArpEntry",
 ]

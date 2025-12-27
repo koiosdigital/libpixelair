@@ -23,12 +23,14 @@ For Home Assistant integration, devices can be identified by MAC address
 and resolved to IP via ARP table lookups.
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 import re
-from dataclasses import dataclass, field, replace
-from typing import Callable, Dict, List, Optional, Set, Tuple, Awaitable, Union
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass, replace
 
 from pythonosc.osc_message_builder import OscMessageBuilder
 
@@ -70,10 +72,10 @@ class DiscoveredDevice:
     serial_number: str
     ip_address: str
     state_counter: int
-    mac_address: Optional[str] = None
-    model: Optional[str] = None
-    nickname: Optional[str] = None
-    firmware_version: Optional[str] = None
+    mac_address: str | None = None
+    model: str | None = None
+    nickname: str | None = None
+    firmware_version: str | None = None
 
     def __hash__(self) -> int:
         # Use serial_number as primary identifier
@@ -105,11 +107,11 @@ class DiscoveredDevice:
         return self.nickname or self.model or self.serial_number
 
 
-# Type alias for discovery callbacks
-DiscoveryCallback = Union[
-    Callable[["DiscoveredDevice"], None],
-    Callable[["DiscoveredDevice"], Awaitable[None]]
-]
+# Type alias for discovery callbacks (Python 3.12+ syntax)
+type DiscoveryCallback = (
+    Callable[[DiscoveredDevice], None]
+    | Callable[[DiscoveredDevice], Awaitable[None]]
+)
 
 
 class DiscoveryHandler(PacketHandler):
@@ -138,7 +140,7 @@ class DiscoveryHandler(PacketHandler):
     async def handle_packet(
         self,
         data: bytes,
-        source_address: Tuple[str, int]
+        source_address: tuple[str, int]
     ) -> bool:
         """
         Handle an incoming UDP packet.
@@ -270,21 +272,21 @@ class DiscoveryService:
         self._logger = logging.getLogger("pixelair.discovery")
 
         # Continuous discovery state
-        self._continuous_handler: Optional[DiscoveryHandler] = None
-        self._continuous_task: Optional[asyncio.Task] = None
+        self._continuous_handler: DiscoveryHandler | None = None
+        self._continuous_task: asyncio.Task[None] | None = None
         self._continuous_running = False
         self._continuous_interval: float = 30.0
 
         # Discovered devices cache (for continuous mode deduplication)
         # Keyed by serial_number
-        self._discovered_devices: Dict[str, DiscoveredDevice] = {}
+        self._discovered_devices: dict[str, DiscoveredDevice] = {}
         self._devices_lock = asyncio.Lock()
 
         # MAC to serial number mapping for fast lookups
-        self._mac_to_serial: Dict[str, str] = {}
+        self._mac_to_serial: dict[str, str] = {}
 
     @property
-    def discovered_devices(self) -> List[DiscoveredDevice]:
+    def discovered_devices(self) -> list[DiscoveredDevice]:
         """
         Get list of devices discovered during continuous discovery.
 
@@ -298,7 +300,7 @@ class DiscoveryService:
         timeout: float = 5.0,
         broadcast_count: int = 3,
         broadcast_interval: float = 1.0
-    ) -> List[DiscoveredDevice]:
+    ) -> list[DiscoveredDevice]:
         """
         Perform a one-shot discovery scan.
 
@@ -322,7 +324,7 @@ class DiscoveryService:
         if not self._listener.is_running:
             raise RuntimeError("UDP listener is not running")
 
-        devices: Dict[str, DiscoveredDevice] = {}
+        devices: dict[str, DiscoveredDevice] = {}
 
         async def on_discovered(device: DiscoveredDevice) -> None:
             # Use serial_number as unique key
@@ -367,7 +369,7 @@ class DiscoveryService:
         broadcast_count: int = 3,
         broadcast_interval: float = 1.0,
         state_timeout: float = 10.0
-    ) -> List[DiscoveredDevice]:
+    ) -> list[DiscoveredDevice]:
         """
         Perform discovery and fetch full device info for each device.
 
@@ -488,7 +490,7 @@ class DiscoveryService:
         self,
         ip_address: str,
         timeout: float = 5.0
-    ) -> Optional[DiscoveredDevice]:
+    ) -> DiscoveredDevice | None:
         """
         Verify a device at a specific IP address.
 
@@ -509,7 +511,7 @@ class DiscoveryService:
         if not self._listener.is_running:
             raise RuntimeError("UDP listener is not running")
 
-        result: Optional[DiscoveredDevice] = None
+        result: DiscoveredDevice | None = None
         response_received = asyncio.Event()
 
         async def on_discovered(device: DiscoveredDevice) -> None:
@@ -551,7 +553,7 @@ class DiscoveryService:
         self,
         mac_address: str,
         use_cache: bool = True
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Resolve a MAC address to an IP address.
 
@@ -592,7 +594,7 @@ class DiscoveryService:
         mac_address: str,
         timeout: float = 5.0,
         warm_arp: bool = True
-    ) -> Optional[DiscoveredDevice]:
+    ) -> DiscoveredDevice | None:
         """
         Find and verify a device by its MAC address.
 
@@ -640,7 +642,7 @@ class DiscoveryService:
         self,
         serial_number: str,
         timeout: float = 5.0
-    ) -> Optional[DiscoveredDevice]:
+    ) -> DiscoveredDevice | None:
         """
         Find a device by its serial number via broadcast discovery.
 
@@ -660,7 +662,7 @@ class DiscoveryService:
         if not self._listener.is_running:
             raise RuntimeError("UDP listener is not running")
 
-        result: Optional[DiscoveredDevice] = None
+        result: DiscoveredDevice | None = None
         found_event = asyncio.Event()
 
         async def on_discovered(device: DiscoveredDevice) -> None:
@@ -811,7 +813,7 @@ class DiscoveryService:
 
     def _build_discovery_message(
         self,
-        source_ip: Optional[str] = None
+        source_ip: str | None = None
     ) -> bytes:
         """
         Build an OSC discovery message.

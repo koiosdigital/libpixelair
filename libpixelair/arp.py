@@ -10,13 +10,14 @@ Note: ARP table lookups only work for devices that have recently communicated
 on the network. A device must be "warmed up" by sending it a packet first.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import re
 import subprocess
 import sys
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 _logger = logging.getLogger("pixelair.arp")
 
@@ -34,7 +35,7 @@ class ArpEntry:
     """
     ip_address: str
     mac_address: str
-    interface: Optional[str] = None
+    interface: str | None = None
     is_permanent: bool = False
 
 
@@ -71,7 +72,7 @@ def normalize_mac(mac: str) -> str:
     return ":".join(clean[i:i+2] for i in range(0, 12, 2))
 
 
-def _parse_arp_output_darwin(output: str) -> List[ArpEntry]:
+def _parse_arp_output_darwin(output: str) -> list[ArpEntry]:
     """
     Parse macOS `arp -a` output.
 
@@ -109,7 +110,7 @@ def _parse_arp_output_darwin(output: str) -> List[ArpEntry]:
     return entries
 
 
-def _parse_arp_output_linux(output: str) -> List[ArpEntry]:
+def _parse_arp_output_linux(output: str) -> list[ArpEntry]:
     """
     Parse Linux `arp -a` or `ip neigh` output.
 
@@ -162,7 +163,7 @@ def _parse_arp_output_linux(output: str) -> List[ArpEntry]:
     return entries
 
 
-async def get_arp_table() -> List[ArpEntry]:
+async def get_arp_table() -> list[ArpEntry]:
     """
     Get the current system ARP table.
 
@@ -178,7 +179,7 @@ async def get_arp_table() -> List[ArpEntry]:
     """
     loop = asyncio.get_running_loop()
 
-    def _get_arp_sync() -> List[ArpEntry]:
+    def _get_arp_sync() -> list[ArpEntry]:
         try:
             if sys.platform == "darwin":
                 result = subprocess.run(
@@ -225,7 +226,7 @@ async def get_arp_table() -> List[ArpEntry]:
     return await loop.run_in_executor(None, _get_arp_sync)
 
 
-async def lookup_ip_by_mac(mac_address: str) -> Optional[str]:
+async def lookup_ip_by_mac(mac_address: str) -> str | None:
     """
     Look up an IP address by MAC address in the ARP table.
 
@@ -253,7 +254,7 @@ async def lookup_ip_by_mac(mac_address: str) -> Optional[str]:
     return None
 
 
-async def lookup_mac_by_ip(ip_address: str) -> Optional[str]:
+async def lookup_mac_by_ip(ip_address: str) -> str | None:
     """
     Look up a MAC address by IP address in the ARP table.
 
@@ -292,7 +293,7 @@ async def warm_arp_cache(ip_address: str) -> bool:
 
     loop = asyncio.get_running_loop()
 
-    def _send_packet():
+    def _send_packet() -> bool:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.settimeout(0.1)
