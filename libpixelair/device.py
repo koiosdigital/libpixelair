@@ -1180,6 +1180,121 @@ class PixelAirDevice:
 
         self._logger.info("Set brightness to %.0f%%", brightness * 100)
 
+    async def set_hue(self, hue: float) -> None:
+        """
+        Set the hue value for the current mode's palette.
+
+        The hue is set on the palette of the currently active mode (Auto, Scene,
+        or Manual). This is compatible with Home Assistant's color control.
+
+        Args:
+            hue: Hue value from 0.0 to 1.0.
+
+        Raises:
+            ValueError: If hue is out of range.
+            RuntimeError: If device is not registered or routes not available.
+        """
+        if not self._registered:
+            raise RuntimeError("Device is not registered")
+
+        if not 0.0 <= hue <= 1.0:
+            raise ValueError(f"Hue must be between 0.0 and 1.0, got {hue}")
+
+        # Get the route for the current mode's palette
+        palette_routes = self._get_current_palette_routes()
+        if not palette_routes or not palette_routes.hue:
+            raise RuntimeError(
+                "Hue control route not available for current mode. "
+                "Call get_state() first to retrieve device routes."
+            )
+
+        # Round to 2 decimal places
+        hue = round(hue, 2)
+
+        await self._send_command(
+            palette_routes.hue,
+            [hue, 0],
+            port=DEVICE_CONTROL_PORT
+        )
+
+        # Update local state optimistically
+        self._get_current_palette_state().hue = hue
+
+        self._logger.info("Set hue to %.2f", hue)
+
+    async def set_saturation(self, saturation: float) -> None:
+        """
+        Set the saturation value for the current mode's palette.
+
+        The saturation is set on the palette of the currently active mode
+        (Auto, Scene, or Manual). This is compatible with Home Assistant's
+        color control.
+
+        Args:
+            saturation: Saturation value from 0.0 to 1.0.
+
+        Raises:
+            ValueError: If saturation is out of range.
+            RuntimeError: If device is not registered or routes not available.
+        """
+        if not self._registered:
+            raise RuntimeError("Device is not registered")
+
+        if not 0.0 <= saturation <= 1.0:
+            raise ValueError(f"Saturation must be between 0.0 and 1.0, got {saturation}")
+
+        # Get the route for the current mode's palette
+        palette_routes = self._get_current_palette_routes()
+        if not palette_routes or not palette_routes.saturation:
+            raise RuntimeError(
+                "Saturation control route not available for current mode. "
+                "Call get_state() first to retrieve device routes."
+            )
+
+        # Round to 2 decimal places
+        saturation = round(saturation, 2)
+
+        await self._send_command(
+            palette_routes.saturation,
+            [saturation, 0],
+            port=DEVICE_CONTROL_PORT
+        )
+
+        # Update local state optimistically
+        self._get_current_palette_state().saturation = saturation
+
+        self._logger.info("Set saturation to %.2f", saturation)
+
+    def _get_current_palette_routes(self) -> Optional[PaletteRoutes]:
+        """
+        Get the palette routes for the current mode.
+
+        Returns:
+            The PaletteRoutes for the current mode, or None if unavailable.
+        """
+        if self._state.mode == DeviceMode.AUTO:
+            return self._routes.auto_palette
+        elif self._state.mode == DeviceMode.SCENE:
+            return self._routes.scene_palette
+        elif self._state.mode == DeviceMode.MANUAL:
+            return self._routes.manual_palette
+        return None
+
+    def _get_current_palette_state(self) -> PaletteState:
+        """
+        Get the palette state for the current mode.
+
+        Returns:
+            The PaletteState for the current mode.
+        """
+        if self._state.mode == DeviceMode.AUTO:
+            return self._state.auto_palette
+        elif self._state.mode == DeviceMode.SCENE:
+            return self._state.scene_palette
+        elif self._state.mode == DeviceMode.MANUAL:
+            return self._state.manual_palette
+        return self._state.auto_palette  # Default fallback
+
     async def set_mode(self, mode: DeviceMode) -> None:
         """
         Set the device display mode.
@@ -1469,6 +1584,32 @@ class PixelAirDevice:
                 "Failed to decode state packet: %s",
                 e
             )
+
+    def _extract_palette(
+        self,
+        palette_fb,
+        palette_state: PaletteState,
+        palette_routes: PaletteRoutes
+    ) -> None:
+        """
+        Extract palette values and routes from a FlatBuffer Palette object.
+
+        Args:
+            palette_fb: The FlatBuffer Palette object.
+            palette_state: The PaletteState to update.
+            palette_routes: The PaletteRoutes to update.
+        """
+        if palette_fb.Hue():
+            hue = palette_fb.Hue()
+            palette_state.hue = hue.Value()
+            if hue.Route():
+                palette_routes.hue = hue.Route().decode("utf-8")
+
+        if palette_fb.Saturation():
+            saturation = palette_fb.Saturation()
+            palette_state.saturation = saturation.Value()
+            if saturation.Route():
+                palette_routes.saturation = saturation.Route().decode("utf-8")
 
     def _update_state_from_fb(self, fb: PixelAirDeviceFB) -> None:
         """

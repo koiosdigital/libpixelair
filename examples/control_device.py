@@ -55,6 +55,8 @@ def print_header(device: Optional[PixelAirDevice], state: Optional[DeviceState])
         print("-" * 60)
         print(f"  Power:      {'ON' if state.is_on else 'OFF'}")
         print(f"  Brightness: {state.brightness * 100:.0f}%")
+        print(f"  Hue:        {state.hue * 100:.0f}%")
+        print(f"  Saturation: {state.saturation * 100:.0f}%")
         print(f"  Effect:     {state.current_effect or 'Unknown'}")
         print(f"  RSSI:       {state.rssi} dBm")
     else:
@@ -73,6 +75,8 @@ def print_menu(state: Optional[DeviceState] = None) -> None:
     print("  [1] Turn ON")
     print("  [2] Turn OFF")
     print("  [3] Set Brightness")
+    print("  [4] Set Hue")
+    print("  [5] Set Saturation")
     print("  [e] Select Effect")
     print()
     print("  [r] Refresh state")
@@ -90,15 +94,20 @@ def print_menu(state: Optional[DeviceState] = None) -> None:
         print()
 
 
-async def get_brightness_input() -> Optional[float]:
+async def get_float_input(prompt: str, min_val: float = 0, max_val: float = 100) -> Optional[float]:
     """
-    Get brightness input from user.
+    Get a float input from user.
+
+    Args:
+        prompt: The prompt to display.
+        min_val: Minimum allowed value.
+        max_val: Maximum allowed value.
 
     Returns:
-        Brightness value (0.0-1.0) or None if cancelled.
+        Float value (0.0-1.0) or None if cancelled.
     """
     print()
-    print("  Enter brightness (0-100) or 'c' to cancel: ", end="", flush=True)
+    print(f"  {prompt} ({min_val:.0f}-{max_val:.0f}) or 'c' to cancel: ", end="", flush=True)
 
     # Read input asynchronously
     loop = asyncio.get_event_loop()
@@ -110,8 +119,8 @@ async def get_brightness_input() -> Optional[float]:
             return None
 
         value = float(line)
-        if value < 0 or value > 100:
-            print("  Error: Value must be between 0 and 100")
+        if value < min_val or value > max_val:
+            print(f"  Error: Value must be between {min_val:.0f} and {max_val:.0f}")
             return None
 
         return value / 100.0
@@ -119,6 +128,36 @@ async def get_brightness_input() -> Optional[float]:
     except ValueError:
         print("  Error: Invalid number")
         return None
+
+
+async def get_brightness_input() -> Optional[float]:
+    """
+    Get brightness input from user.
+
+    Returns:
+        Brightness value (0.0-1.0) or None if cancelled.
+    """
+    return await get_float_input("Enter brightness")
+
+
+async def get_hue_input() -> Optional[float]:
+    """
+    Get hue input from user.
+
+    Returns:
+        Hue value (0.0-1.0) or None if cancelled.
+    """
+    return await get_float_input("Enter hue")
+
+
+async def get_saturation_input() -> Optional[float]:
+    """
+    Get saturation input from user.
+
+    Returns:
+        Saturation value (0.0-1.0) or None if cancelled.
+    """
+    return await get_float_input("Enter saturation")
 
 
 async def get_effect_input(state: DeviceState) -> Optional[EffectInfo]:
@@ -194,6 +233,24 @@ async def handle_input(
             if brightness is not None:
                 print(f"  Setting brightness to {brightness * 100:.0f}%...", end="", flush=True)
                 await device.set_brightness(brightness)
+                print(" Done!")
+                return False, await device.get_state()
+            return False, None
+
+        elif key == "4":
+            hue = await get_hue_input()
+            if hue is not None:
+                print(f"  Setting hue to {hue * 100:.0f}%...", end="", flush=True)
+                await device.set_hue(hue)
+                print(" Done!")
+                return False, await device.get_state()
+            return False, None
+
+        elif key == "5":
+            saturation = await get_saturation_input()
+            if saturation is not None:
+                print(f"  Setting saturation to {saturation * 100:.0f}%...", end="", flush=True)
+                await device.set_saturation(saturation)
                 print(" Done!")
                 return False, await device.get_state()
             return False, None
