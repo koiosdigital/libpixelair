@@ -13,16 +13,18 @@ assembled and decoded into the device's state.
 """
 
 import asyncio
+import json
 import logging
+import re
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, Awaitable, Callable, List, Optional, Tuple, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple, Union
 
 from pythonosc.osc_message_builder import OscMessageBuilder
 
 from .udp_listener import UDPListener, PacketHandler
 from .packet_assembler import PacketAssembler
-from .discovery import DiscoveredDevice
+from .discovery import DiscoveredDevice, DISCOVERY_PORT, DISCOVERY_ROUTE
 from .arp import lookup_ip_by_mac, normalize_mac
 
 # Import FlatBuffer generated classes - must import pixelairfb first to set up sys.path
@@ -533,6 +535,15 @@ class PixelAirDevice:
         self._state_events: List[asyncio.Event] = []
         self._state_events_lock = asyncio.Lock()
 
+        # State counter polling
+        self._state_counter: Optional[int] = None
+        self._polling_task: Optional[asyncio.Task] = None
+        self._polling_running = False
+        self._poll_interval: float = 2.5
+        self._discovery_handler: Optional[PacketHandler] = None
+        self._discovery_event = asyncio.Event()
+        self._discovery_response: Optional[dict] = None
+
     @classmethod
     def from_discovered(
         cls,
@@ -1012,9 +1023,13 @@ class PixelAirDevice:
         Unregister this device from the UDP listener.
 
         After unregistration, the device will no longer receive packets.
+        Also stops polling if it was running.
         """
         if not self._registered:
             return
+
+        # Stop polling if running
+        await self.stop_polling()
 
         self._listener.remove_handler(self._handler)
         await self._assembler.stop()
@@ -1048,6 +1063,175 @@ class PixelAirDevice:
             self._state_callbacks.remove(callback)
             return True
         return False
+
+    # =========================================================================
+    # State Counter Polling
+    # =========================================================================
+
+    @property
+    def is_polling(self) -> bool:
+        """Check if state counter polling is active."""
+        return self._polling_running
+
+    @property
+    def poll_interval(self) -> float:
+        """Get the current poll interval in seconds."""
+        return self._poll_interval
+
+    @poll_interval.setter
+    def poll_interval(self, value: float) -> None:
+        """Set the poll interval in seconds."""
+        if value < 0.5:
+            raise ValueError("Poll interval must be at least 0.5 seconds")
+        self._poll_interval = value
+
+    async def start_polling(self, interval: float = 2.5) -> None:
+        """
+        Start polling the device for state changes.
+
+        This uses an efficient state_counter-based polling mechanism:
+        1. Sends a lightweight discovery request to the device
+        2. Device responds with serial_number, ip_address, and state_counter
+        3. Only fetches full state when state_counter changes
+
+        This is much more efficient than polling full state every time,
+        as the discovery response is small (~100 bytes) compared to
+        full state (~2KB+ fragmented).
+
+        Args:
+            interval: Time between polls in seconds (default 2.5s, min 0.5s).
+
+        Raises:
+            RuntimeError: If device is not registered.
+            ValueError: If interval is less than 0.5 seconds.
+        """
+        if not self._registered:
+            raise RuntimeError("Device must be registered before starting polling")
+
+        if self._polling_running:
+            self._logger.debug("Polling already running")
+            return
+
+        self.poll_interval = interval
+        self._polling_running = True
+
+        # Add discovery response handler
+        self._discovery_handler = _DiscoveryResponseHandler(
+            self._ip_address,
+            self._on_discovery_response
+        )
+        self._listener.add_handler(self._discovery_handler)
+
+        # Start polling task
+        self._polling_task = asyncio.create_task(self._polling_loop())
+
+        self._logger.info(
+            "Started state counter polling (interval=%.1fs)",
+            self._poll_interval
+        )
+
+    async def stop_polling(self) -> None:
+        """
+        Stop polling the device for state changes.
+
+        Safe to call even if polling is not running.
+        """
+        if not self._polling_running:
+            return
+
+        self._polling_running = False
+
+        # Cancel polling task
+        if self._polling_task:
+            self._polling_task.cancel()
+            try:
+                await self._polling_task
+            except asyncio.CancelledError:
+                pass
+            self._polling_task = None
+
+        # Remove discovery handler
+        if self._discovery_handler:
+            self._listener.remove_handler(self._discovery_handler)
+            self._discovery_handler = None
+
+        self._logger.info("Stopped state counter polling")
+
+    async def _polling_loop(self) -> None:
+        """
+        Background task for state counter polling.
+
+        Polls the device at regular intervals, fetching full state
+        only when the state_counter changes.
+        """
+        while self._polling_running:
+            try:
+                await self._poll_once()
+            except Exception as e:
+                self._logger.warning("Poll error: %s", e)
+
+            # Wait before next poll
+            await asyncio.sleep(self._poll_interval)
+
+    async def _poll_once(self) -> bool:
+        """
+        Perform a single poll cycle.
+
+        Returns:
+            True if poll succeeded and got a response, False otherwise.
+        """
+        # Send discovery request to our device
+        builder = OscMessageBuilder(DISCOVERY_ROUTE)
+        message = builder.build().dgram
+
+        await self._listener.send_to(message, self._ip_address, DISCOVERY_PORT)
+
+        # Wait for response with timeout
+        self._discovery_event.clear()
+        try:
+            await asyncio.wait_for(self._discovery_event.wait(), timeout=2.0)
+        except asyncio.TimeoutError:
+            self._logger.debug("No poll response from device")
+            return False
+
+        response = self._discovery_response
+        if not response:
+            return False
+
+        state_counter = response.get("state_counter")
+        if state_counter is None:
+            return False
+
+        # Check if state has changed
+        if self._state_counter is None or state_counter != self._state_counter:
+            old_counter = self._state_counter
+            self._state_counter = state_counter
+
+            self._logger.debug(
+                "State counter changed: %s -> %s, fetching state...",
+                old_counter,
+                state_counter
+            )
+
+            # Fetch full state
+            try:
+                await self.get_state(timeout=10.0)
+            except asyncio.TimeoutError:
+                self._logger.warning("Timeout fetching state after counter change")
+            except Exception as e:
+                self._logger.warning("Error fetching state: %s", e)
+
+        return True
+
+    def _on_discovery_response(self, data: Dict[str, Any]) -> None:
+        """
+        Handle a discovery response from our device.
+
+        Args:
+            data: The parsed JSON response.
+        """
+        self._discovery_response = data
+        self._discovery_event.set()
 
     async def get_state(self, timeout: float = DEFAULT_STATE_TIMEOUT) -> DeviceState:
         """
@@ -1790,3 +1974,64 @@ class PixelAirDevice:
             f"model={self._state.model}, "
             f"registered={self._registered})"
         )
+
+
+# Regex to extract JSON from discovery response (prefixed with $)
+_DISCOVERY_RESPONSE_PATTERN = re.compile(rb"^\$(\{.*\})$", re.DOTALL)
+
+
+class _DiscoveryResponseHandler(PacketHandler):
+    """
+    Packet handler for discovery responses during polling.
+
+    Filters responses to only match the target device's IP address.
+    """
+
+    def __init__(
+        self,
+        target_ip: str,
+        callback: Callable[[Dict[str, Any]], None]
+    ):
+        """
+        Initialize the handler.
+
+        Args:
+            target_ip: Only handle responses from this IP address.
+            callback: Function to call with parsed response data.
+        """
+        self._target_ip = target_ip
+        self._callback = callback
+        self._logger = logging.getLogger("pixelair.device.discovery_handler")
+
+    async def handle_packet(self, data: bytes, source_address: Tuple[str, int]) -> bool:
+        """
+        Handle incoming packets, looking for discovery responses.
+
+        Args:
+            data: The raw packet data.
+            source_address: Tuple of (ip, port) of the sender.
+
+        Returns:
+            True if packet was handled, False otherwise.
+        """
+        # Only handle packets from our target device
+        source_ip = source_address[0]
+        if source_ip != self._target_ip:
+            return False
+
+        # Try to match discovery response pattern ($JSON)
+        match = _DISCOVERY_RESPONSE_PATTERN.match(data)
+        if not match:
+            return False
+
+        try:
+            json_str = match.group(1).decode("utf-8")
+            response = json.loads(json_str)
+
+            self._logger.debug("Received discovery response: %s", response)
+            self._callback(response)
+            return True
+
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            self._logger.warning("Failed to parse discovery response: %s", e)
+            return True
