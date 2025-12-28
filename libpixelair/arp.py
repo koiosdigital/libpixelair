@@ -31,6 +31,7 @@ class ArpEntry:
         interface: The network interface name (if available).
         is_permanent: Whether this is a permanent/static entry.
     """
+
     ip_address: str
     mac_address: str
     interface: str | None = None
@@ -66,7 +67,7 @@ def normalize_mac(mac: str) -> str:
         raise ValueError(f"Invalid MAC address: {mac}")
 
     # Format with colons
-    return ":".join(clean[i:i+2] for i in range(0, 12, 2))
+    return ":".join(clean[i : i + 2] for i in range(0, 12, 2))
 
 
 def _parse_arp_output_darwin(output: str) -> list[ArpEntry]:
@@ -78,9 +79,7 @@ def _parse_arp_output_darwin(output: str) -> list[ArpEntry]:
     """
     entries = []
     # Pattern: hostname (ip) at mac on interface ...
-    pattern = re.compile(
-        r'\S+\s+\((\d+\.\d+\.\d+\.\d+)\)\s+at\s+([0-9a-fA-F:]+)\s+on\s+(\S+)'
-    )
+    pattern = re.compile(r"\S+\s+\((\d+\.\d+\.\d+\.\d+)\)\s+at\s+([0-9a-fA-F:]+)\s+on\s+(\S+)")
 
     for line in output.splitlines():
         match = pattern.search(line)
@@ -94,12 +93,14 @@ def _parse_arp_output_darwin(output: str) -> list[ArpEntry]:
                 continue
 
             try:
-                entries.append(ArpEntry(
-                    ip_address=ip_addr,
-                    mac_address=normalize_mac(mac_addr),
-                    interface=interface,
-                    is_permanent="permanent" in line.lower()
-                ))
+                entries.append(
+                    ArpEntry(
+                        ip_address=ip_addr,
+                        mac_address=normalize_mac(mac_addr),
+                        interface=interface,
+                        is_permanent="permanent" in line.lower(),
+                    )
+                )
             except ValueError:
                 continue
 
@@ -119,25 +120,25 @@ def _parse_arp_output_linux(output: str) -> list[ArpEntry]:
 
     # Try arp -a format first
     arp_pattern = re.compile(
-        r'\S+\s+\((\d+\.\d+\.\d+\.\d+)\)\s+at\s+([0-9a-fA-F:]+)\s+.*on\s+(\S+)'
+        r"\S+\s+\((\d+\.\d+\.\d+\.\d+)\)\s+at\s+([0-9a-fA-F:]+)\s+.*on\s+(\S+)"
     )
 
     # ip neigh format
-    neigh_pattern = re.compile(
-        r'(\d+\.\d+\.\d+\.\d+)\s+dev\s+(\S+)\s+lladdr\s+([0-9a-fA-F:]+)'
-    )
+    neigh_pattern = re.compile(r"(\d+\.\d+\.\d+\.\d+)\s+dev\s+(\S+)\s+lladdr\s+([0-9a-fA-F:]+)")
 
     for line in output.splitlines():
         # Try arp -a format
         match = arp_pattern.search(line)
         if match:
             try:
-                entries.append(ArpEntry(
-                    ip_address=match.group(1),
-                    mac_address=normalize_mac(match.group(2)),
-                    interface=match.group(3),
-                    is_permanent=False
-                ))
+                entries.append(
+                    ArpEntry(
+                        ip_address=match.group(1),
+                        mac_address=normalize_mac(match.group(2)),
+                        interface=match.group(3),
+                        is_permanent=False,
+                    )
+                )
             except ValueError:
                 continue
             continue
@@ -146,12 +147,14 @@ def _parse_arp_output_linux(output: str) -> list[ArpEntry]:
         match = neigh_pattern.search(line)
         if match:
             try:
-                entries.append(ArpEntry(
-                    ip_address=match.group(1),
-                    mac_address=normalize_mac(match.group(3)),
-                    interface=match.group(2),
-                    is_permanent=False
-                ))
+                entries.append(
+                    ArpEntry(
+                        ip_address=match.group(1),
+                        mac_address=normalize_mac(match.group(3)),
+                        interface=match.group(2),
+                        is_permanent=False,
+                    )
+                )
             except ValueError:
                 continue
 
@@ -176,22 +179,14 @@ async def get_arp_table() -> list[ArpEntry]:
     def _get_arp_sync() -> list[ArpEntry]:
         try:
             if sys.platform == "darwin":
-                result = subprocess.run(
-                    ["arp", "-a"],
-                    capture_output=True,
-                    text=True,
-                    timeout=5.0
-                )
+                result = subprocess.run(["arp", "-a"], capture_output=True, text=True, timeout=5.0)
                 if result.returncode == 0:
                     return _parse_arp_output_darwin(result.stdout)
             else:
                 # Try ip neigh first (modern Linux)
                 try:
                     result = subprocess.run(
-                        ["ip", "neigh"],
-                        capture_output=True,
-                        text=True,
-                        timeout=5.0
+                        ["ip", "neigh"], capture_output=True, text=True, timeout=5.0
                     )
                     if result.returncode == 0:
                         return _parse_arp_output_linux(result.stdout)
@@ -199,12 +194,7 @@ async def get_arp_table() -> list[ArpEntry]:
                     pass
 
                 # Fall back to arp -a
-                result = subprocess.run(
-                    ["arp", "-a"],
-                    capture_output=True,
-                    text=True,
-                    timeout=5.0
-                )
+                result = subprocess.run(["arp", "-a"], capture_output=True, text=True, timeout=5.0)
                 if result.returncode == 0:
                     return _parse_arp_output_linux(result.stdout)
 

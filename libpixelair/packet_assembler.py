@@ -38,6 +38,7 @@ def _get_monotonic_time() -> float:
     except RuntimeError:
         # No running loop, use monotonic clock directly
         import time
+
         return time.monotonic()
 
 
@@ -51,6 +52,7 @@ class FragmentBuffer:
         fragments: Dictionary mapping fragment index to payload bytes.
         created_at: Monotonic timestamp when this buffer was created.
     """
+
     counter: int
     total_fragments: int
     fragments: dict[int, bytes] = field(default_factory=dict)
@@ -150,7 +152,7 @@ class PacketAssembler:
         self,
         callback: CompletionCallback,
         fragment_timeout: float = DEFAULT_FRAGMENT_TIMEOUT,
-        cleanup_interval: float = 1.0
+        cleanup_interval: float = 1.0,
     ) -> None:
         """Initialize the packet assembler.
 
@@ -198,7 +200,7 @@ class PacketAssembler:
             "complete": self._complete_count,
             "expired": self._expired_count,
             "invalid": self._invalid_count,
-            "pending": self.pending_count
+            "pending": self.pending_count,
         }
 
     async def start(self) -> None:
@@ -237,11 +239,7 @@ class PacketAssembler:
 
         self._logger.debug("PacketAssembler stopped")
 
-    async def process_packet(
-        self,
-        data: bytes,
-        source_address: tuple[str, int]
-    ) -> bool:
+    async def process_packet(self, data: bytes, source_address: tuple[str, int]) -> bool:
         """Process an incoming UDP packet.
 
         This method handles both single-fragment and multi-fragment packets.
@@ -273,7 +271,7 @@ class PacketAssembler:
             counter,
             fragment_index + 1,
             total_fragments,
-            len(payload)
+            len(payload),
         )
 
         # Handle single-fragment packet (fast path)
@@ -289,8 +287,7 @@ class PacketAssembler:
             # Get or create buffer
             if buffer_key not in self._buffers:
                 self._buffers[buffer_key] = FragmentBuffer(
-                    counter=counter,
-                    total_fragments=total_fragments
+                    counter=counter, total_fragments=total_fragments
                 )
 
             buffer = self._buffers[buffer_key]
@@ -303,11 +300,10 @@ class PacketAssembler:
                     source_ip,
                     counter,
                     buffer.total_fragments,
-                    total_fragments
+                    total_fragments,
                 )
                 self._buffers[buffer_key] = FragmentBuffer(
-                    counter=counter,
-                    total_fragments=total_fragments
+                    counter=counter, total_fragments=total_fragments
                 )
                 buffer = self._buffers[buffer_key]
 
@@ -323,7 +319,7 @@ class PacketAssembler:
                         "Assembled complete payload from %s: %d bytes from %d fragments",
                         source_ip,
                         len(complete_payload),
-                        total_fragments
+                        total_fragments,
                     )
                     # Release lock before callback
                     self._complete_count += 1
@@ -364,11 +360,7 @@ class PacketAssembler:
             return False
 
         if fragment_index >= total_fragments:
-            self._logger.debug(
-                "Fragment index %d >= total %d",
-                fragment_index,
-                total_fragments
-            )
+            self._logger.debug("Fragment index %d >= total %d", fragment_index, total_fragments)
             self._invalid_count += 1
             return False
 
@@ -402,7 +394,8 @@ class PacketAssembler:
         """Remove expired fragment buffers."""
         async with self._lock:
             expired_keys = [
-                key for key, buffer in self._buffers.items()
+                key
+                for key, buffer in self._buffers.items()
                 if buffer.is_expired(self._fragment_timeout)
             ]
 
@@ -410,12 +403,11 @@ class PacketAssembler:
                 buffer = self._buffers.pop(key)
                 self._expired_count += 1
                 self._logger.debug(
-                    "Expired incomplete buffer: source=%s, counter=%d, "
-                    "received=%d/%d fragments",
+                    "Expired incomplete buffer: source=%s, counter=%d, " "received=%d/%d fragments",
                     key[0],
                     key[1],
                     buffer.received_count,
-                    buffer.total_fragments
+                    buffer.total_fragments,
                 )
 
     def reset_stats(self) -> None:

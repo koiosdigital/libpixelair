@@ -12,6 +12,7 @@ from enum import IntEnum
 
 class DeviceMode(IntEnum):
     """Device display mode."""
+
     AUTO = 0
     SCENE = 1
     MANUAL = 2
@@ -25,6 +26,7 @@ class SceneInfo:
         label: The scene name (e.g., "Sunset", "Ocean").
         index: The scene index used for selection.
     """
+
     label: str
     index: int
 
@@ -40,6 +42,7 @@ class EffectInfo:
         id: Unique identifier for this effect (used when setting).
         display_name: Human-readable name shown to users.
     """
+
     id: str
     display_name: str
 
@@ -50,6 +53,7 @@ class PaletteState:
 
     Values are floats from 0.0 to 1.0.
     """
+
     hue: float = 0.0
     saturation: float = 0.0
 
@@ -60,6 +64,7 @@ class PaletteRoutes:
 
     Each mode (Auto, Scene, Manual) has its own palette with separate routes.
     """
+
     hue: str | None = None
     saturation: str | None = None
 
@@ -72,6 +77,7 @@ class ControlRoutes:
     used to send control commands. Routes are obfuscated strings that are
     unique per device/firmware.
     """
+
     brightness: str | None = None
     is_displaying: str | None = None
     mode: str | None = None
@@ -167,6 +173,7 @@ class DeviceState:
         scene_palette: Palette state for Scene mode.
         manual_palette: Palette state for Manual mode.
     """
+
     serial_number: str | None = None
     model: str | None = None
     nickname: str | None = None
@@ -230,18 +237,22 @@ class DeviceState:
 
         scenes = self.scenes or []
         for scene in scenes:
-            result.append(EffectInfo(
-                id=f"scene:{scene.index}",
-                display_name=f"Scene: {scene.label}",
-            ))
+            result.append(
+                EffectInfo(
+                    id=f"scene:{scene.index}",
+                    display_name=f"Scene: {scene.label}",
+                )
+            )
 
         animations = self.manual_animations or []
         for i, anim_id in enumerate(animations):
             if _is_animation_compatible(anim_id, self.model):
-                result.append(EffectInfo(
-                    id=f"manual:{i}",
-                    display_name=_get_animation_display_name(anim_id),
-                ))
+                result.append(
+                    EffectInfo(
+                        id=f"manual:{i}",
+                        display_name=_get_animation_display_name(anim_id),
+                    )
+                )
 
         return result
 

@@ -54,11 +54,7 @@ class DevicePacketHandler(PacketHandler):
         self._connection = connection
         self._logger = logger
 
-    async def handle_packet(
-        self,
-        data: bytes,
-        source_address: tuple[str, int]
-    ) -> bool:
+    async def handle_packet(self, data: bytes, source_address: tuple[str, int]) -> bool:
         """Route fragmented state packets to the device's assembler."""
         if source_address[0] != self._connection.ip_address:
             return False
@@ -73,20 +69,12 @@ class DevicePacketHandler(PacketHandler):
 class DiscoveryResponseHandler(PacketHandler):
     """Packet handler for discovery responses during polling."""
 
-    def __init__(
-        self,
-        target_ip: str,
-        callback: Callable[[dict[str, Any]], None]
-    ) -> None:
+    def __init__(self, target_ip: str, callback: Callable[[dict[str, Any]], None]) -> None:
         self._target_ip = target_ip
         self._callback = callback
         self._logger = logging.getLogger("pixelair.device.discovery_handler")
 
-    async def handle_packet(
-        self,
-        data: bytes,
-        source_address: tuple[str, int]
-    ) -> bool:
+    async def handle_packet(self, data: bytes, source_address: tuple[str, int]) -> bool:
         """Handle incoming discovery response packets."""
         if source_address[0] != self._target_ip:
             return False
@@ -119,7 +107,7 @@ class DeviceConnection:
         listener: UDPListener,
         serial_number: str,
         mac_address: str | None,
-        logger: logging.Logger
+        logger: logging.Logger,
     ) -> None:
         self._ip_address = ip_address
         self._listener = listener
@@ -129,9 +117,7 @@ class DeviceConnection:
 
         # State
         self._state = DeviceState(
-            serial_number=serial_number,
-            ip_address=ip_address,
-            mac_address=self._mac_address
+            serial_number=serial_number, ip_address=ip_address, mac_address=self._mac_address
         )
         self._routes = ControlRoutes()
         self._raw_state: PixelAirDeviceFB | None = None
@@ -291,10 +277,7 @@ class DeviceConnection:
     # =========================================================================
 
     async def send_command(
-        self,
-        route: str,
-        params: list[Any] | None = None,
-        port: int = DEVICE_COMMAND_PORT
+        self, route: str, params: list[Any] | None = None, port: int = DEVICE_COMMAND_PORT
     ) -> None:
         """Send an OSC command to the device."""
         if not self._listener.is_running:
@@ -356,8 +339,7 @@ class DeviceConnection:
         self._polling_running = True
 
         self._discovery_handler = DiscoveryResponseHandler(
-            self._ip_address,
-            self._on_discovery_response
+            self._ip_address, self._on_discovery_response
         )
         self._listener.add_handler(self._discovery_handler)
 
@@ -406,12 +388,8 @@ class DeviceConnection:
                     response = self._discovery_response
                     if response:
                         state_counter = response.get("state_counter")
-                        state_changed = (
-                            state_counter is not None
-                            and (
-                                self._state_counter is None
-                                or state_counter != self._state_counter
-                            )
+                        state_changed = state_counter is not None and (
+                            self._state_counter is None or state_counter != self._state_counter
                         )
                         if state_changed:
                             self._state_counter = state_counter
@@ -457,6 +435,7 @@ class DeviceConnection:
 
         # Fall back to broadcast discovery
         from .discovery import DiscoveryService
+
         discovery = DiscoveryService(self._listener)
         discovered = await discovery.find_device_by_serial(self._serial_number, timeout=timeout)
 
@@ -489,7 +468,7 @@ class DeviceConnection:
                 "State updated: model=%s, on=%s, brightness=%.1f%%",
                 self._state.model,
                 self._state.is_on,
-                self._state.brightness * 100
+                self._state.brightness * 100,
             )
 
             # Notify waiters
@@ -563,17 +542,15 @@ class DeviceConnection:
                 for i in range(scene_mode.ScenesLength()):
                     scene = scene_mode.Scenes(i)
                     if scene and scene.Label():
-                        self._state.scenes.append(SceneInfo(
-                            label=scene.Label().decode("utf-8"),
-                            index=scene.Index(),
-                        ))
+                        self._state.scenes.append(
+                            SceneInfo(
+                                label=scene.Label().decode("utf-8"),
+                                index=scene.Index(),
+                            )
+                        )
 
                 scene_palette = scene_mode.Palette()
-                if (
-                    scene_palette
-                    and self._state.scene_palette
-                    and self._routes.scene_palette
-                ):
+                if scene_palette and self._state.scene_palette and self._routes.scene_palette:
                     self._extract_palette(
                         scene_palette,
                         self._state.scene_palette,
@@ -596,11 +573,7 @@ class DeviceConnection:
                         self._state.manual_animations.append(anim.decode("utf-8"))
 
                 manual_palette = manual_mode.Palette()
-                if (
-                    manual_palette
-                    and self._state.manual_palette
-                    and self._routes.manual_palette
-                ):
+                if manual_palette and self._state.manual_palette and self._routes.manual_palette:
                     self._extract_palette(
                         manual_palette,
                         self._state.manual_palette,
@@ -610,11 +583,7 @@ class DeviceConnection:
             if engine.AutoMode():
                 auto_mode = engine.AutoMode()
                 auto_palette = auto_mode.Palette()
-                if (
-                    auto_palette
-                    and self._state.auto_palette
-                    and self._routes.auto_palette
-                ):
+                if auto_palette and self._state.auto_palette and self._routes.auto_palette:
                     self._extract_palette(
                         auto_palette,
                         self._state.auto_palette,
@@ -622,10 +591,7 @@ class DeviceConnection:
                     )
 
     def _extract_palette(
-        self,
-        palette_fb: Any,
-        palette_state: PaletteState,
-        palette_routes: PaletteRoutes
+        self, palette_fb: Any, palette_state: PaletteState, palette_routes: PaletteRoutes
     ) -> None:
         """Extract palette values and routes from a FlatBuffer Palette."""
         if palette_fb.Hue():

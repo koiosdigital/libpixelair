@@ -40,9 +40,7 @@ from libpixelair.pixelairfb.PixelAir.PixelAirDevice import (
 
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("poll_device")
 
 # Target device identifiers (persistent)
@@ -106,12 +104,8 @@ def dump_flatbuffer_state(fb: PixelAirDeviceFB) -> dict:
     if fb.Network():
         network = fb.Network()
         state["network"] = {
-            "mac_address": (
-                network.MacAddress().decode("utf-8") if network.MacAddress() else None
-            ),
-            "ip_address": (
-                network.IpAddress().decode("utf-8") if network.IpAddress() else None
-            ),
+            "mac_address": (network.MacAddress().decode("utf-8") if network.MacAddress() else None),
+            "ip_address": (network.IpAddress().decode("utf-8") if network.IpAddress() else None),
             "subnet": network.Subnet().decode("utf-8") if network.Subnet() else None,
         }
 
@@ -382,16 +376,12 @@ class DevicePoller:
                     # Update serial if we didn't have it
                     if not self._serial_number:
                         self._serial_number = discovered.serial_number
-                        logger.info(
-                            "Discovered serial number: %s", self._serial_number
-                        )
+                        logger.info("Discovered serial number: %s", self._serial_number)
 
                     if new_ip != self._ip_address:
                         old_ip = self._ip_address
                         self._ip_address = new_ip
-                        logger.info(
-                            "Resolved via ARP: %s -> %s", old_ip, new_ip
-                        )
+                        logger.info("Resolved via ARP: %s -> %s", old_ip, new_ip)
 
                         # Re-create device with new IP
                         if self._device:
@@ -408,9 +398,7 @@ class DevicePoller:
                 self._serial_number,
             )
 
-            discovered = await discovery.find_device_by_serial(
-                self._serial_number, timeout=3.0
-            )
+            discovered = await discovery.find_device_by_serial(self._serial_number, timeout=3.0)
 
             if discovered:
                 new_ip = discovered.ip_address
@@ -506,9 +494,7 @@ class DevicePoller:
                             self._current_backoff = self._poll_interval
 
                     # Apply exponential backoff
-                    self._current_backoff = min(
-                        self._current_backoff * 2, MAX_BACKOFF
-                    )
+                    self._current_backoff = min(self._current_backoff * 2, MAX_BACKOFF)
                     logger.debug(
                         "Backoff: %.1fs (failures: %d)",
                         self._current_backoff,
@@ -560,9 +546,7 @@ class DevicePoller:
             self._serial_number = serial_number
             logger.info("Discovered serial number: %s", self._serial_number)
 
-        logger.debug(
-            "Discovery response: serial=%s, counter=%s", serial_number, state_counter
-        )
+        logger.debug("Discovery response: serial=%s, counter=%s", serial_number, state_counter)
 
         # Check if state has changed
         if self._state_counter is None or state_counter != self._state_counter:
@@ -609,9 +593,7 @@ class DevicePoller:
         message = builder.build().dgram
 
         await self._listener.send_to(message, self._ip_address, DISCOVERY_PORT)
-        logger.debug(
-            "Sent discovery request to %s:%d", self._ip_address, DISCOVERY_PORT
-        )
+        logger.debug("Sent discovery request to %s:%d", self._ip_address, DISCOVERY_PORT)
 
     def _on_state_updated(self, state: DeviceState) -> None:
         """

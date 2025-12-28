@@ -44,7 +44,7 @@ DISCOVERY_PORT = 9090
 DISCOVERY_ROUTE = "/fluoraDiscovery"
 
 # Regex to extract JSON from discovery response (prefixed with $)
-DISCOVERY_RESPONSE_PATTERN = re.compile(rb'^\$(\{.*\})$', re.DOTALL)
+DISCOVERY_RESPONSE_PATTERN = re.compile(rb"^\$(\{.*\})$", re.DOTALL)
 
 
 @dataclass
@@ -67,6 +67,7 @@ class DiscoveredDevice:
         nickname: User-assigned device name (populated after state fetch).
         firmware_version: Current firmware version (populated after state fetch).
     """
+
     serial_number: str
     ip_address: str
     state_counter: int
@@ -106,8 +107,7 @@ class DiscoveredDevice:
 
 # Type alias for discovery callbacks (Python 3.12+ syntax)
 type DiscoveryCallback = (
-    Callable[[DiscoveredDevice], None]
-    | Callable[[DiscoveredDevice], Awaitable[None]]
+    Callable[[DiscoveredDevice], None] | Callable[[DiscoveredDevice], Awaitable[None]]
 )
 
 
@@ -118,11 +118,7 @@ class DiscoveryHandler(PacketHandler):
     and invokes the registered callback for each discovered device.
     """
 
-    def __init__(
-        self,
-        callback: DiscoveryCallback,
-        logger: logging.Logger
-    ) -> None:
+    def __init__(self, callback: DiscoveryCallback, logger: logging.Logger) -> None:
         """Initialize the discovery handler.
 
         Args:
@@ -165,23 +161,20 @@ class DiscoveryHandler(PacketHandler):
             state_counter = response.get("state_counter")
 
             if not all([serial_number, ip_address, state_counter is not None]):
-                self._logger.warning(
-                    "Discovery response missing required fields: %s",
-                    response
-                )
+                self._logger.warning("Discovery response missing required fields: %s", response)
                 return True  # Still consumed as discovery packet
 
             device = DiscoveredDevice(
                 serial_number=str(serial_number),
                 ip_address=str(ip_address),
-                state_counter=int(state_counter)
+                state_counter=int(state_counter),
             )
 
             self._logger.debug(
                 "Discovered device: serial=%s, ip=%s, counter=%d",
                 device.serial_number,
                 device.ip_address,
-                device.state_counter
+                device.state_counter,
             )
 
             # Invoke callback
@@ -189,16 +182,10 @@ class DiscoveryHandler(PacketHandler):
             return True
 
         except json.JSONDecodeError as e:
-            self._logger.warning(
-                "Failed to parse discovery response JSON: %s",
-                e
-            )
+            self._logger.warning("Failed to parse discovery response JSON: %s", e)
             return True
         except Exception as e:
-            self._logger.exception(
-                "Error processing discovery response: %s",
-                e
-            )
+            self._logger.exception("Error processing discovery response: %s", e)
             return True
 
     async def _invoke_callback(self, device: DiscoveredDevice) -> None:
@@ -212,10 +199,7 @@ class DiscoveryHandler(PacketHandler):
             if asyncio.iscoroutine(result):
                 await result
         except Exception as e:
-            self._logger.exception(
-                "Discovery callback raised exception: %s",
-                e
-            )
+            self._logger.exception("Discovery callback raised exception: %s", e)
 
 
 class DiscoveryService:
@@ -286,10 +270,7 @@ class DiscoveryService:
         return list(self._discovered_devices.values())
 
     async def discover(
-        self,
-        timeout: float = 5.0,
-        broadcast_count: int = 3,
-        broadcast_interval: float = 1.0
+        self, timeout: float = 5.0, broadcast_count: int = 3, broadcast_interval: float = 1.0
     ) -> list[DiscoveredDevice]:
         """Perform a one-shot discovery scan.
 
@@ -326,10 +307,7 @@ class DiscoveryService:
         try:
             # Send discovery broadcasts
             broadcast_task = asyncio.create_task(
-                self._send_discovery_broadcasts(
-                    count=broadcast_count,
-                    interval=broadcast_interval
-                )
+                self._send_discovery_broadcasts(count=broadcast_count, interval=broadcast_interval)
             )
 
             # Wait for timeout
@@ -343,10 +321,7 @@ class DiscoveryService:
         finally:
             self._listener.remove_handler(handler)
 
-        self._logger.info(
-            "Discovery complete: found %d device(s)",
-            len(devices)
-        )
+        self._logger.info("Discovery complete: found %d device(s)", len(devices))
 
         return list(devices.values())
 
@@ -355,7 +330,7 @@ class DiscoveryService:
         timeout: float = 5.0,
         broadcast_count: int = 3,
         broadcast_interval: float = 1.0,
-        state_timeout: float = 10.0
+        state_timeout: float = 10.0,
     ) -> list[DiscoveredDevice]:
         """Perform discovery and fetch full device info for each device.
 
@@ -376,34 +351,25 @@ class DiscoveryService:
         """
         # First do basic discovery
         devices = await self.discover(
-            timeout=timeout,
-            broadcast_count=broadcast_count,
-            broadcast_interval=broadcast_interval
+            timeout=timeout, broadcast_count=broadcast_count, broadcast_interval=broadcast_interval
         )
 
         # Fetch full info for each device
         enriched_devices = []
         for device in devices:
             try:
-                enriched = await self.get_device_info(
-                    device,
-                    timeout=state_timeout
-                )
+                enriched = await self.get_device_info(device, timeout=state_timeout)
                 enriched_devices.append(enriched)
             except Exception as e:
                 self._logger.warning(
-                    "Failed to get full info for device %s: %s",
-                    device.serial_number,
-                    e
+                    "Failed to get full info for device %s: %s", device.serial_number, e
                 )
                 enriched_devices.append(device)
 
         return enriched_devices
 
     async def get_device_info(
-        self,
-        device: DiscoveredDevice,
-        timeout: float = 10.0
+        self, device: DiscoveredDevice, timeout: float = 10.0
     ) -> DiscoveredDevice:
         """Fetch full device information via /getState.
 
@@ -434,7 +400,7 @@ class DiscoveryService:
             listener=self._listener,
             serial_number=device.serial_number,
             mac_address="",  # Will be populated from state
-            _internal=True
+            _internal=True,
         )
 
         try:
@@ -447,7 +413,7 @@ class DiscoveryService:
                 model=state.model,
                 nickname=state.nickname,
                 firmware_version=state.firmware_version,
-                mac_address=state.mac_address
+                mac_address=state.mac_address,
             )
 
             # Update MAC mapping
@@ -463,7 +429,7 @@ class DiscoveryService:
                 "Got full info for %s: model=%s, mac=%s",
                 device.serial_number,
                 enriched.model,
-                enriched.mac_address
+                enriched.mac_address,
             )
 
             return enriched
@@ -471,11 +437,7 @@ class DiscoveryService:
         finally:
             await temp_device.unregister()
 
-    async def verify_device(
-        self,
-        ip_address: str,
-        timeout: float = 5.0
-    ) -> DiscoveredDevice | None:
+    async def verify_device(self, ip_address: str, timeout: float = 5.0) -> DiscoveredDevice | None:
         """Verify a device at a specific IP address.
 
         Sends a discovery message directly to the device and waits for
@@ -513,31 +475,20 @@ class DiscoveryService:
 
             # Send to specific device
             await self._listener.send_to(message, ip_address, DISCOVERY_PORT)
-            self._logger.debug(
-                "Sent verification request to %s:%d",
-                ip_address,
-                DISCOVERY_PORT
-            )
+            self._logger.debug("Sent verification request to %s:%d", ip_address, DISCOVERY_PORT)
 
             # Wait for response
             try:
                 await asyncio.wait_for(response_received.wait(), timeout)
             except TimeoutError:
-                self._logger.debug(
-                    "Verification timeout for device at %s",
-                    ip_address
-                )
+                self._logger.debug("Verification timeout for device at %s", ip_address)
 
         finally:
             self._listener.remove_handler(handler)
 
         return result
 
-    async def resolve_mac_to_ip(
-        self,
-        mac_address: str,
-        use_cache: bool = True
-    ) -> str | None:
+    async def resolve_mac_to_ip(self, mac_address: str, use_cache: bool = True) -> str | None:
         """Resolve a MAC address to an IP address.
 
         First checks the internal cache of discovered devices, then falls
@@ -573,10 +524,7 @@ class DiscoveryService:
         return await lookup_ip_by_mac(normalized)
 
     async def find_device_by_mac(
-        self,
-        mac_address: str,
-        timeout: float = 5.0,
-        warm_arp: bool = True
+        self, mac_address: str, timeout: float = 5.0, warm_arp: bool = True
     ) -> DiscoveredDevice | None:
         """Find and verify a device by its MAC address.
 
@@ -602,10 +550,7 @@ class DiscoveryService:
         # Resolve MAC to IP
         ip_address = await self.resolve_mac_to_ip(mac_address)
         if not ip_address:
-            self._logger.debug(
-                "Could not resolve MAC %s to IP address",
-                mac_address
-            )
+            self._logger.debug("Could not resolve MAC %s to IP address", mac_address)
             return None
 
         # Verify the device
@@ -621,9 +566,7 @@ class DiscoveryService:
         return device
 
     async def find_device_by_serial(
-        self,
-        serial_number: str,
-        timeout: float = 5.0
+        self, serial_number: str, timeout: float = 5.0
     ) -> DiscoveredDevice | None:
         """Find a device by its serial number via broadcast discovery.
 
@@ -663,10 +606,7 @@ class DiscoveryService:
             try:
                 await asyncio.wait_for(found_event.wait(), timeout)
             except TimeoutError:
-                self._logger.debug(
-                    "Device with serial %s not found within timeout",
-                    serial_number
-                )
+                self._logger.debug("Device with serial %s not found within timeout", serial_number)
 
         finally:
             self._listener.remove_handler(handler)
@@ -678,7 +618,7 @@ class DiscoveryService:
         callback: DiscoveryCallback,
         interval: float = 30.0,
         initial_scan: bool = True,
-        fetch_full_info: bool = False
+        fetch_full_info: bool = False,
     ) -> None:
         """Start continuous device discovery.
 
@@ -715,9 +655,7 @@ class DiscoveryService:
                             device = await self.get_device_info(device)
                         except Exception as e:
                             self._logger.warning(
-                                "Failed to get full info for %s: %s",
-                                device.serial_number,
-                                e
+                                "Failed to get full info for %s: %s", device.serial_number, e
                             )
 
                     self._discovered_devices[device.serial_number] = device
@@ -736,23 +674,15 @@ class DiscoveryService:
                         if asyncio.iscoroutine(result):
                             await result
                     except Exception as e:
-                        self._logger.exception(
-                            "Discovery callback raised exception: %s",
-                            e
-                        )
+                        self._logger.exception("Discovery callback raised exception: %s", e)
 
         self._continuous_handler = DiscoveryHandler(on_discovered, self._logger)
         self._listener.add_handler(self._continuous_handler)
 
         # Start background task
-        self._continuous_task = asyncio.create_task(
-            self._continuous_discovery_loop(initial_scan)
-        )
+        self._continuous_task = asyncio.create_task(self._continuous_discovery_loop(initial_scan))
 
-        self._logger.info(
-            "Started continuous discovery (interval=%ds)",
-            interval
-        )
+        self._logger.info("Started continuous discovery (interval=%ds)", interval)
 
     async def stop_continuous(self) -> None:
         """Stop continuous device discovery.
@@ -787,10 +717,7 @@ class DiscoveryService:
             self._discovered_devices.clear()
             self._mac_to_serial.clear()
 
-    def _build_discovery_message(
-        self,
-        source_ip: str | None = None
-    ) -> bytes:
+    def _build_discovery_message(self, source_ip: str | None = None) -> bytes:
         """Build an OSC discovery message.
 
         Args:
@@ -809,11 +736,7 @@ class DiscoveryService:
 
         return builder.build().dgram
 
-    async def _send_discovery_broadcasts(
-        self,
-        count: int,
-        interval: float
-    ) -> None:
+    async def _send_discovery_broadcasts(self, count: int, interval: float) -> None:
         """Send multiple discovery broadcasts.
 
         Args:
@@ -833,25 +756,19 @@ class DiscoveryService:
                 message = self._build_discovery_message(interface.ip_address)
 
                 # Send to broadcast address
-                await self._listener.send_to(
-                    message,
-                    interface.broadcast_address,
-                    DISCOVERY_PORT
-                )
+                await self._listener.send_to(message, interface.broadcast_address, DISCOVERY_PORT)
 
                 self._logger.debug(
                     "Sent discovery broadcast to %s:%d (from %s via %s)",
                     interface.broadcast_address,
                     DISCOVERY_PORT,
                     interface.ip_address,
-                    interface.name
+                    interface.name,
                 )
 
             except Exception as e:
                 self._logger.warning(
-                    "Failed to send discovery on interface %s: %s",
-                    interface.name,
-                    e
+                    "Failed to send discovery on interface %s: %s", interface.name, e
                 )
 
     async def _continuous_discovery_loop(self, initial_scan: bool) -> None:
@@ -871,7 +788,4 @@ class DiscoveryService:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                self._logger.exception(
-                    "Error in continuous discovery loop: %s",
-                    e
-                )
+                self._logger.exception("Error in continuous discovery loop: %s", e)

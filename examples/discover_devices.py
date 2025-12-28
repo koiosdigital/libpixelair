@@ -18,10 +18,7 @@ from libpixelair import (
 
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(name)s] %(levelname)s: %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
 # Reduce noise from the library internals
 logging.getLogger("pixelair").setLevel(logging.DEBUG)
@@ -47,11 +44,7 @@ async def main():
         print("Waiting 5 seconds for device responses...\n")
 
         # Perform one-shot discovery
-        devices = await discovery.discover(
-            timeout=5.0,
-            broadcast_count=3,
-            broadcast_interval=1.0
-        )
+        devices = await discovery.discover(timeout=5.0, broadcast_count=3, broadcast_interval=1.0)
 
         if not devices:
             print("No devices found.")

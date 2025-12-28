@@ -30,6 +30,7 @@ class NetworkInterface:
         broadcast_address: The broadcast address for this interface's subnet.
         netmask: The network mask for this interface.
     """
+
     name: str
     ip_address: str
     broadcast_address: str
@@ -66,11 +67,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
     registered packet handlers.
     """
 
-    def __init__(
-        self,
-        handlers: list[PacketHandler],
-        logger: logging.Logger
-    ) -> None:
+    def __init__(self, handlers: list[PacketHandler], logger: logging.Logger) -> None:
         """Initialize the UDP protocol.
 
         Args:
@@ -119,7 +116,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
                     "Handler %s raised exception processing packet from %s: %s",
                     handler.__class__.__name__,
                     addr,
-                    e
+                    e,
                 )
 
     def error_received(self, exc: Exception) -> None:
@@ -168,11 +165,7 @@ class UDPListener:
             await listener.stop()
     """
 
-    def __init__(
-        self,
-        port: int = PIXELAIR_LISTEN_PORT,
-        buffer_size: int = 65535
-    ) -> None:
+    def __init__(self, port: int = PIXELAIR_LISTEN_PORT, buffer_size: int = 65535) -> None:
         """Initialize the UDP listener.
 
         Args:
@@ -261,7 +254,7 @@ class UDPListener:
         self._logger.info(
             "Discovered %d network interface(s): %s",
             len(self._interfaces),
-            ", ".join(f"{iface.name}={iface.ip_address}" for iface in self._interfaces)
+            ", ".join(f"{iface.name}={iface.ip_address}" for iface in self._interfaces),
         )
 
         # Create and bind the UDP socket
@@ -281,8 +274,7 @@ class UDPListener:
 
         # Create the asyncio transport and protocol
         self._transport, self._protocol = await loop.create_datagram_endpoint(
-            lambda: UDPProtocol(self._handlers, self._logger),
-            sock=sock
+            lambda: UDPProtocol(self._handlers, self._logger), sock=sock
         )
 
         self._running = True
@@ -351,15 +343,11 @@ class UDPListener:
                     len(data),
                     iface.broadcast_address,
                     port,
-                    iface.name
+                    iface.name,
                 )
                 sent_count += 1
             except Exception as e:
-                self._logger.warning(
-                    "Failed to send broadcast on %s: %s",
-                    iface.name,
-                    e
-                )
+                self._logger.warning("Failed to send broadcast on %s: %s", iface.name, e)
 
         return sent_count
 
@@ -387,21 +375,20 @@ class UDPListener:
 
                         # Skip loopback and addresses without broadcast
                         if ip_addr and broadcast and not ip_addr.startswith("127."):
-                            interfaces.append(NetworkInterface(
-                                name=iface_name,
-                                ip_address=ip_addr,
-                                broadcast_address=broadcast,
-                                netmask=netmask or "255.255.255.0"
-                            ))
+                            interfaces.append(
+                                NetworkInterface(
+                                    name=iface_name,
+                                    ip_address=ip_addr,
+                                    broadcast_address=broadcast,
+                                    netmask=netmask or "255.255.255.0",
+                                )
+                            )
         except ImportError:
-            self._logger.warning(
-                "netifaces not available, falling back to socket-based discovery"
-            )
+            self._logger.warning("netifaces not available, falling back to socket-based discovery")
             interfaces = self._discover_interfaces_fallback()
         except Exception as e:
             self._logger.warning(
-                "Failed to discover interfaces with netifaces: %s, using fallback",
-                e
+                "Failed to discover interfaces with netifaces: %s, using fallback", e
             )
             interfaces = self._discover_interfaces_fallback()
 
@@ -428,12 +415,14 @@ class UDPListener:
             ip_parts = ip_addr.split(".")
             broadcast = f"{ip_parts[0]}.{ip_parts[1]}.{ip_parts[2]}.255"
 
-            interfaces.append(NetworkInterface(
-                name="primary",
-                ip_address=ip_addr,
-                broadcast_address=broadcast,
-                netmask="255.255.255.0"
-            ))
+            interfaces.append(
+                NetworkInterface(
+                    name="primary",
+                    ip_address=ip_addr,
+                    broadcast_address=broadcast,
+                    netmask="255.255.255.0",
+                )
+            )
         except Exception as e:
             self._logger.error("Failed to discover primary interface: %s", e)
 

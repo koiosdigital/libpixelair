@@ -176,7 +176,9 @@ async def get_effect_input(state: DeviceState) -> Optional[EffectInfo]:
         return None
 
     print()
-    print("  Enter effect number (1-{}) or 'c' to cancel: ".format(len(effects)), end="", flush=True)
+    print(
+        "  Enter effect number (1-{}) or 'c' to cancel: ".format(len(effects)), end="", flush=True
+    )
 
     # Read input asynchronously
     loop = asyncio.get_event_loop()

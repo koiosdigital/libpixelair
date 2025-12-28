@@ -104,7 +104,7 @@ class PixelAirDevice:
         listener: UDPListener,
         serial_number: str,
         mac_address: str,
-        _internal: bool = False
+        _internal: bool = False,
     ) -> None:
         """Initialize a PixelAirDevice.
 
@@ -140,7 +140,7 @@ class PixelAirDevice:
             listener=listener,
             serial_number=serial_number,
             mac_address=mac_address,
-            logger=self._logger
+            logger=self._logger,
         )
 
     # =========================================================================
@@ -148,11 +148,7 @@ class PixelAirDevice:
     # =========================================================================
 
     @classmethod
-    def from_discovered(
-        cls,
-        discovered: DiscoveredDevice,
-        listener: UDPListener
-    ) -> PixelAirDevice:
+    def from_discovered(cls, discovered: DiscoveredDevice, listener: UDPListener) -> PixelAirDevice:
         """Create a device from a discovery result.
 
         Args:
@@ -176,16 +172,12 @@ class PixelAirDevice:
             listener=listener,
             serial_number=discovered.serial_number,
             mac_address=discovered.mac_address,
-            _internal=True
+            _internal=True,
         )
 
     @classmethod
     async def from_identifiers(
-        cls,
-        mac_address: str,
-        serial_number: str,
-        listener: UDPListener,
-        timeout: float = 5.0
+        cls, mac_address: str, serial_number: str, listener: UDPListener, timeout: float = 5.0
     ) -> PixelAirDevice | None:
         """Create a device from stored MAC and serial number.
 
@@ -223,6 +215,7 @@ class PixelAirDevice:
         if ip_address:
             logger.debug("Resolved MAC %s to IP %s via ARP", normalized_mac, ip_address)
             from .discovery import DiscoveryService
+
             discovery = DiscoveryService(listener)
             discovered = await discovery.verify_device(ip_address, timeout=timeout)
 
@@ -232,12 +225,13 @@ class PixelAirDevice:
                     listener=listener,
                     serial_number=serial_number,
                     mac_address=normalized_mac,
-                    _internal=True
+                    _internal=True,
                 )
 
         # Strategy 2: Broadcast discovery
         logger.debug("ARP failed, trying broadcast discovery for serial %s", serial_number)
         from .discovery import DiscoveryService
+
         discovery = DiscoveryService(listener)
         discovered = await discovery.find_device_by_serial(serial_number, timeout=timeout)
 
@@ -248,7 +242,7 @@ class PixelAirDevice:
                 listener=listener,
                 serial_number=serial_number,
                 mac_address=normalized_mac,
-                _internal=True
+                _internal=True,
             )
 
         logger.warning("Could not find device MAC=%s serial=%s", normalized_mac, serial_number)
@@ -256,10 +250,7 @@ class PixelAirDevice:
 
     @classmethod
     async def from_mac_address(
-        cls,
-        mac_address: str,
-        listener: UDPListener,
-        timeout: float = 5.0
+        cls, mac_address: str, listener: UDPListener, timeout: float = 5.0
     ) -> PixelAirDevice | None:
         """Create a device by resolving its MAC address.
 
@@ -291,6 +282,7 @@ class PixelAirDevice:
         if not ip_address:
             # Try warming ARP with broadcast
             from .discovery import DiscoveryService
+
             discovery = DiscoveryService(listener)
             await discovery._broadcast_discovery()
             await asyncio.sleep(0.5)
@@ -302,6 +294,7 @@ class PixelAirDevice:
 
         # Verify device responds
         from .discovery import DiscoveryService
+
         discovery = DiscoveryService(listener)
         discovered = await discovery.verify_device(ip_address, timeout=timeout)
 
@@ -314,7 +307,7 @@ class PixelAirDevice:
             listener=listener,
             serial_number=discovered.serial_number,
             mac_address=normalized_mac,
-            _internal=True
+            _internal=True,
         )
 
     # =========================================================================
@@ -498,9 +491,7 @@ class PixelAirDevice:
             raise RuntimeError("Power route not available. Call get_state() first.")
 
         await self._conn.send_command(
-            routes.is_displaying,
-            [1 if on else 0, 0],
-            port=DEVICE_CONTROL_PORT
+            routes.is_displaying, [1 if on else 0, 0], port=DEVICE_CONTROL_PORT
         )
         self._conn.state.is_on = on
         self._logger.info("Set power to %s", "ON" if on else "OFF")
@@ -526,11 +517,7 @@ class PixelAirDevice:
             raise ValueError(f"Brightness must be 0.0-1.0, got {brightness}")
 
         brightness = round(brightness, 2)
-        await self._conn.send_command(
-            routes.brightness,
-            [brightness, 0],
-            port=DEVICE_CONTROL_PORT
-        )
+        await self._conn.send_command(routes.brightness, [brightness, 0], port=DEVICE_CONTROL_PORT)
         self._conn.state.brightness = brightness
         self._logger.info("Set brightness to %.0f%%", brightness * 100)
 
@@ -555,11 +542,7 @@ class PixelAirDevice:
             raise RuntimeError("Hue route not available. Call get_state() first.")
 
         hue = round(hue, 2)
-        await self._conn.send_command(
-            palette_routes.hue,
-            [hue, 0],
-            port=DEVICE_CONTROL_PORT
-        )
+        await self._conn.send_command(palette_routes.hue, [hue, 0], port=DEVICE_CONTROL_PORT)
         self._get_current_palette_state().hue = hue
         self._logger.info("Set hue to %.2f", hue)
 
@@ -585,9 +568,7 @@ class PixelAirDevice:
 
         saturation = round(saturation, 2)
         await self._conn.send_command(
-            palette_routes.saturation,
-            [saturation, 0],
-            port=DEVICE_CONTROL_PORT
+            palette_routes.saturation, [saturation, 0], port=DEVICE_CONTROL_PORT
         )
         self._get_current_palette_state().saturation = saturation
         self._logger.info("Set saturation to %.2f", saturation)
@@ -630,11 +611,7 @@ class PixelAirDevice:
         if not routes.mode:
             raise RuntimeError("Mode route not available. Call get_state() first.")
 
-        await self._conn.send_command(
-            routes.mode,
-            [int(mode), 0],
-            port=DEVICE_CONTROL_PORT
-        )
+        await self._conn.send_command(routes.mode, [int(mode), 0], port=DEVICE_CONTROL_PORT)
         self._conn.state.mode = mode
         self._logger.info("Set mode to %s", mode.name)
 
@@ -702,17 +679,13 @@ class PixelAirDevice:
         # Ensure scene mode
         if self._conn.state.mode != DeviceMode.SCENE:
             await self._conn.send_command(
-                routes.mode,
-                [int(DeviceMode.SCENE), 0],
-                port=DEVICE_CONTROL_PORT
+                routes.mode, [int(DeviceMode.SCENE), 0], port=DEVICE_CONTROL_PORT
             )
             self._conn.state.mode = DeviceMode.SCENE
 
         # Set scene index
         await self._conn.send_command(
-            routes.active_scene_index,
-            [scene_index, 0],
-            port=DEVICE_CONTROL_PORT
+            routes.active_scene_index, [scene_index, 0], port=DEVICE_CONTROL_PORT
         )
         self._conn.state.active_scene_index = scene_index
         self._logger.info("Set scene index to %d", scene_index)
@@ -725,17 +698,13 @@ class PixelAirDevice:
         # Ensure manual mode
         if self._conn.state.mode != DeviceMode.MANUAL:
             await self._conn.send_command(
-                routes.mode,
-                [int(DeviceMode.MANUAL), 0],
-                port=DEVICE_CONTROL_PORT
+                routes.mode, [int(DeviceMode.MANUAL), 0], port=DEVICE_CONTROL_PORT
             )
             self._conn.state.mode = DeviceMode.MANUAL
 
         # Set animation index
         await self._conn.send_command(
-            routes.manual_animation_index,
-            [animation_index, 0],
-            port=DEVICE_CONTROL_PORT
+            routes.manual_animation_index, [animation_index, 0], port=DEVICE_CONTROL_PORT
         )
         self._conn.state.active_manual_animation_index = animation_index
         self._logger.info("Set manual animation index to %d", animation_index)
