@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Trigger(object):
+class Trigger:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Trigger(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Trigger
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Trigger
@@ -49,28 +50,28 @@ class Trigger(object):
             return self._tab.String(o + self._tab.Pos)
         return None
 
-def TriggerStart(builder):
+def TriggerStart(builder) -> None:
     builder.StartObject(3)
 
-def Start(builder):
+def Start(builder) -> None:
     TriggerStart(builder)
 
-def TriggerAddLabel(builder, label):
+def TriggerAddLabel(builder, label) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(label), 0)
 
-def AddLabel(builder, label):
+def AddLabel(builder, label) -> None:
     TriggerAddLabel(builder, label)
 
-def TriggerAddRoute(builder, route):
+def TriggerAddRoute(builder, route) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(route), 0)
 
-def AddRoute(builder, route):
+def AddRoute(builder, route) -> None:
     TriggerAddRoute(builder, route)
 
-def TriggerAddType(builder, type):
+def TriggerAddType(builder, type) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(type), 0)
 
-def AddType(builder, type):
+def AddType(builder, type) -> None:
     TriggerAddType(builder, type)
 
 def TriggerEnd(builder):

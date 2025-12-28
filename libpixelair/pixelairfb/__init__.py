@@ -1,5 +1,4 @@
-"""
-FlatBuffer generated classes for PixelAir protocol.
+"""FlatBuffer generated classes for PixelAir protocol.
 
 This module sets up the import path so that the generated FlatBuffer
 classes can find each other using their absolute imports (e.g.,

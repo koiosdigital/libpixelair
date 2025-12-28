@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Engine(object):
+class Engine:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Engine(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Engine
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Engine
@@ -138,70 +139,70 @@ class Engine(object):
             return obj
         return None
 
-def EngineStart(builder):
+def EngineStart(builder) -> None:
     builder.StartObject(10)
 
-def Start(builder):
+def Start(builder) -> None:
     EngineStart(builder)
 
-def EngineAddBrightness(builder, brightness):
+def EngineAddBrightness(builder, brightness) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(brightness), 0)
 
-def AddBrightness(builder, brightness):
+def AddBrightness(builder, brightness) -> None:
     EngineAddBrightness(builder, brightness)
 
-def EngineAddIsDisplaying(builder, isDisplaying):
+def EngineAddIsDisplaying(builder, isDisplaying) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(isDisplaying), 0)
 
-def AddIsDisplaying(builder, isDisplaying):
+def AddIsDisplaying(builder, isDisplaying) -> None:
     EngineAddIsDisplaying(builder, isDisplaying)
 
-def EngineAddReboot(builder, reboot):
+def EngineAddReboot(builder, reboot) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(reboot), 0)
 
-def AddReboot(builder, reboot):
+def AddReboot(builder, reboot) -> None:
     EngineAddReboot(builder, reboot)
 
-def EngineAddMode(builder, mode):
+def EngineAddMode(builder, mode) -> None:
     builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(mode), 0)
 
-def AddMode(builder, mode):
+def AddMode(builder, mode) -> None:
     EngineAddMode(builder, mode)
 
-def EngineAddResetWiFi(builder, resetWiFi):
+def EngineAddResetWiFi(builder, resetWiFi) -> None:
     builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(resetWiFi), 0)
 
-def AddResetWiFi(builder, resetWiFi):
+def AddResetWiFi(builder, resetWiFi) -> None:
     EngineAddResetWiFi(builder, resetWiFi)
 
-def EngineAddOffEvent(builder, offEvent):
+def EngineAddOffEvent(builder, offEvent) -> None:
     builder.PrependUOffsetTRelativeSlot(5, flatbuffers.number_types.UOffsetTFlags.py_type(offEvent), 0)
 
-def AddOffEvent(builder, offEvent):
+def AddOffEvent(builder, offEvent) -> None:
     EngineAddOffEvent(builder, offEvent)
 
-def EngineAddOnEvent(builder, onEvent):
+def EngineAddOnEvent(builder, onEvent) -> None:
     builder.PrependUOffsetTRelativeSlot(6, flatbuffers.number_types.UOffsetTFlags.py_type(onEvent), 0)
 
-def AddOnEvent(builder, onEvent):
+def AddOnEvent(builder, onEvent) -> None:
     EngineAddOnEvent(builder, onEvent)
 
-def EngineAddAutoMode(builder, autoMode):
+def EngineAddAutoMode(builder, autoMode) -> None:
     builder.PrependUOffsetTRelativeSlot(7, flatbuffers.number_types.UOffsetTFlags.py_type(autoMode), 0)
 
-def AddAutoMode(builder, autoMode):
+def AddAutoMode(builder, autoMode) -> None:
     EngineAddAutoMode(builder, autoMode)
 
-def EngineAddSceneMode(builder, sceneMode):
+def EngineAddSceneMode(builder, sceneMode) -> None:
     builder.PrependUOffsetTRelativeSlot(8, flatbuffers.number_types.UOffsetTFlags.py_type(sceneMode), 0)
 
-def AddSceneMode(builder, sceneMode):
+def AddSceneMode(builder, sceneMode) -> None:
     EngineAddSceneMode(builder, sceneMode)
 
-def EngineAddManualMode(builder, manualMode):
+def EngineAddManualMode(builder, manualMode) -> None:
     builder.PrependUOffsetTRelativeSlot(9, flatbuffers.number_types.UOffsetTFlags.py_type(manualMode), 0)
 
-def AddManualMode(builder, manualMode):
+def AddManualMode(builder, manualMode) -> None:
     EngineAddManualMode(builder, manualMode)
 
 def EngineEnd(builder):

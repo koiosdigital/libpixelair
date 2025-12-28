@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class FloatParameter(object):
+class FloatParameter:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class FloatParameter(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # FloatParameter
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # FloatParameter
@@ -56,34 +57,34 @@ class FloatParameter(object):
             return self._tab.Get(flatbuffers.number_types.Float32Flags, o + self._tab.Pos)
         return 0.0
 
-def FloatParameterStart(builder):
+def FloatParameterStart(builder) -> None:
     builder.StartObject(4)
 
-def Start(builder):
+def Start(builder) -> None:
     FloatParameterStart(builder)
 
-def FloatParameterAddLabel(builder, label):
+def FloatParameterAddLabel(builder, label) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(label), 0)
 
-def AddLabel(builder, label):
+def AddLabel(builder, label) -> None:
     FloatParameterAddLabel(builder, label)
 
-def FloatParameterAddRoute(builder, route):
+def FloatParameterAddRoute(builder, route) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(route), 0)
 
-def AddRoute(builder, route):
+def AddRoute(builder, route) -> None:
     FloatParameterAddRoute(builder, route)
 
-def FloatParameterAddType(builder, type):
+def FloatParameterAddType(builder, type) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(type), 0)
 
-def AddType(builder, type):
+def AddType(builder, type) -> None:
     FloatParameterAddType(builder, type)
 
-def FloatParameterAddValue(builder, value):
+def FloatParameterAddValue(builder, value) -> None:
     builder.PrependFloat32Slot(3, value, 0.0)
 
-def AddValue(builder, value):
+def AddValue(builder, value) -> None:
     FloatParameterAddValue(builder, value)
 
 def FloatParameterEnd(builder):

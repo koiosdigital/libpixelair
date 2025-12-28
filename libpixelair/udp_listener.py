@@ -1,5 +1,4 @@
-"""
-UDP Listener Manager for PixelAir devices.
+"""UDP Listener Manager for PixelAir devices.
 
 This module provides a reusable async UDP listener that binds to port 12345
 on all available network interfaces. It handles incoming packets and routes
@@ -12,11 +11,10 @@ device state updates, etc.) and uses asyncio for non-blocking operation.
 from __future__ import annotations
 
 import asyncio
-import socket
 import logging
+import socket
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-
 
 # Default port for receiving PixelAir device responses
 PIXELAIR_LISTEN_PORT = 12345
@@ -24,8 +22,7 @@ PIXELAIR_LISTEN_PORT = 12345
 
 @dataclass(frozen=True)
 class NetworkInterface:
-    """
-    Represents a network interface with its IP and broadcast addresses.
+    """Represents a network interface with its IP and broadcast addresses.
 
     Attributes:
         name: The interface name (e.g., 'en0', 'eth0').
@@ -40,8 +37,7 @@ class NetworkInterface:
 
 
 class PacketHandler(ABC):
-    """
-    Abstract base class for UDP packet handlers.
+    """Abstract base class for UDP packet handlers.
 
     Implementations of this class can be registered with the UDPListener
     to receive incoming packets. Each handler can filter packets based on
@@ -50,8 +46,7 @@ class PacketHandler(ABC):
 
     @abstractmethod
     async def handle_packet(self, data: bytes, source_address: tuple[str, int]) -> bool:
-        """
-        Handle an incoming UDP packet.
+        """Handle an incoming UDP packet.
 
         Args:
             data: The raw packet data received.
@@ -65,8 +60,7 @@ class PacketHandler(ABC):
 
 
 class UDPProtocol(asyncio.DatagramProtocol):
-    """
-    Asyncio datagram protocol for handling UDP packets.
+    """Asyncio datagram protocol for handling UDP packets.
 
     This protocol receives UDP datagrams and dispatches them to
     registered packet handlers.
@@ -76,9 +70,8 @@ class UDPProtocol(asyncio.DatagramProtocol):
         self,
         handlers: list[PacketHandler],
         logger: logging.Logger
-    ):
-        """
-        Initialize the UDP protocol.
+    ) -> None:
+        """Initialize the UDP protocol.
 
         Args:
             handlers: List of packet handlers to dispatch received packets to.
@@ -90,8 +83,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
         self._loop: asyncio.AbstractEventLoop | None = None
 
     def connection_made(self, transport: asyncio.transports.BaseTransport) -> None:
-        """
-        Called when the UDP socket is ready.
+        """Called when the UDP socket is ready.
 
         Args:
             transport: The transport representing the UDP socket.
@@ -101,8 +93,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
         self._logger.debug("UDP protocol connection established")
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
-        """
-        Called when a UDP datagram is received.
+        """Called when a UDP datagram is received.
 
         Args:
             data: The raw packet data.
@@ -112,8 +103,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
             self._loop.create_task(self._dispatch_packet(data, addr))
 
     async def _dispatch_packet(self, data: bytes, addr: tuple[str, int]) -> None:
-        """
-        Dispatch a packet to all registered handlers.
+        """Dispatch a packet to all registered handlers.
 
         Args:
             data: The raw packet data.
@@ -133,8 +123,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
                 )
 
     def error_received(self, exc: Exception) -> None:
-        """
-        Called when a send or receive operation raises an OSError.
+        """Called when a send or receive operation raises an OSError.
 
         Args:
             exc: The exception that was raised.
@@ -142,8 +131,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
         self._logger.warning("UDP protocol error: %s", exc)
 
     def connection_lost(self, exc: Exception | None) -> None:
-        """
-        Called when the connection is lost or closed.
+        """Called when the connection is lost or closed.
 
         Args:
             exc: The exception that caused the connection loss, or None.
@@ -184,9 +172,8 @@ class UDPListener:
         self,
         port: int = PIXELAIR_LISTEN_PORT,
         buffer_size: int = 65535
-    ):
-        """
-        Initialize the UDP listener.
+    ) -> None:
+        """Initialize the UDP listener.
 
         Args:
             port: The UDP port to listen on. Defaults to 12345.
@@ -203,8 +190,7 @@ class UDPListener:
 
     @property
     def is_running(self) -> bool:
-        """
-        Check if the listener is currently running.
+        """Check if the listener is currently running.
 
         Returns:
             True if the listener is active and receiving packets.
@@ -213,8 +199,7 @@ class UDPListener:
 
     @property
     def interfaces(self) -> list[NetworkInterface]:
-        """
-        Get the list of discovered network interfaces.
+        """Get the list of discovered network interfaces.
 
         Returns:
             List of NetworkInterface objects representing available interfaces.
@@ -223,8 +208,7 @@ class UDPListener:
 
     @property
     def port(self) -> int:
-        """
-        Get the port this listener is bound to.
+        """Get the port this listener is bound to.
 
         Returns:
             The UDP port number.
@@ -232,8 +216,7 @@ class UDPListener:
         return self._port
 
     def add_handler(self, handler: PacketHandler) -> None:
-        """
-        Register a packet handler.
+        """Register a packet handler.
 
         Handlers are called in the order they are registered. If a handler
         returns True from handle_packet(), subsequent handlers are not called.
@@ -246,8 +229,7 @@ class UDPListener:
             self._logger.debug("Added packet handler: %s", handler.__class__.__name__)
 
     def remove_handler(self, handler: PacketHandler) -> bool:
-        """
-        Unregister a packet handler.
+        """Unregister a packet handler.
 
         Args:
             handler: The PacketHandler to remove.
@@ -262,8 +244,7 @@ class UDPListener:
         return False
 
     async def start(self) -> None:
-        """
-        Start the UDP listener.
+        """Start the UDP listener.
 
         This method discovers network interfaces, creates a UDP socket bound
         to port 12345 on all interfaces, and begins receiving packets.
@@ -308,8 +289,7 @@ class UDPListener:
         self._logger.info("UDP listener started on port %d", self._port)
 
     async def stop(self) -> None:
-        """
-        Stop the UDP listener.
+        """Stop the UDP listener.
 
         This method closes the UDP socket and stops receiving packets.
         It is safe to call this method multiple times.
@@ -327,8 +307,7 @@ class UDPListener:
         self._logger.info("UDP listener stopped")
 
     async def send_to(self, data: bytes, address: str, port: int) -> None:
-        """
-        Send a UDP packet to a specific address.
+        """Send a UDP packet to a specific address.
 
         Args:
             data: The packet data to send.
@@ -345,8 +324,7 @@ class UDPListener:
         self._logger.debug("Sent %d bytes to %s:%d", len(data), address, port)
 
     async def send_broadcast(self, data: bytes, port: int) -> int:
-        """
-        Send a UDP broadcast packet on all interfaces.
+        """Send a UDP broadcast packet on all interfaces.
 
         This method sends the packet to the broadcast address of each
         discovered network interface.
@@ -386,8 +364,7 @@ class UDPListener:
         return sent_count
 
     def _discover_interfaces(self) -> list[NetworkInterface]:
-        """
-        Discover available network interfaces with broadcast capability.
+        """Discover available network interfaces with broadcast capability.
 
         Returns:
             List of NetworkInterface objects for interfaces that support
@@ -431,8 +408,7 @@ class UDPListener:
         return interfaces
 
     def _discover_interfaces_fallback(self) -> list[NetworkInterface]:
-        """
-        Fallback interface discovery using socket.
+        """Fallback interface discovery using socket.
 
         This method attempts to discover the primary network interface by
         connecting to a well-known address and checking the local endpoint.
@@ -463,9 +439,8 @@ class UDPListener:
 
         return interfaces
 
-    async def __aenter__(self) -> "UDPListener":
-        """
-        Async context manager entry.
+    async def __aenter__(self) -> UDPListener:
+        """Async context manager entry.
 
         Returns:
             The UDPListener instance after starting.
@@ -479,8 +454,7 @@ class UDPListener:
         exc_val: BaseException | None,
         exc_tb: object,
     ) -> None:
-        """
-        Async context manager exit.
+        """Async context manager exit.
 
         Stops the listener on exit.
         """

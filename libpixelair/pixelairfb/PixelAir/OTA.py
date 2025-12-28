@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class OTA(object):
+class OTA:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class OTA(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # OTA
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # OTA
@@ -64,34 +65,34 @@ class OTA(object):
             return obj
         return None
 
-def OTAStart(builder):
+def OTAStart(builder) -> None:
     builder.StartObject(4)
 
-def Start(builder):
+def Start(builder) -> None:
     OTAStart(builder)
 
-def OTAAddUpdateAvailable(builder, updateAvailable):
+def OTAAddUpdateAvailable(builder, updateAvailable) -> None:
     builder.PrependBoolSlot(0, updateAvailable, 0)
 
-def AddUpdateAvailable(builder, updateAvailable):
+def AddUpdateAvailable(builder, updateAvailable) -> None:
     OTAAddUpdateAvailable(builder, updateAvailable)
 
-def OTAAddIsExecutingOta(builder, isExecutingOta):
+def OTAAddIsExecutingOta(builder, isExecutingOta) -> None:
     builder.PrependBoolSlot(1, isExecutingOta, 0)
 
-def AddIsExecutingOta(builder, isExecutingOta):
+def AddIsExecutingOta(builder, isExecutingOta) -> None:
     OTAAddIsExecutingOta(builder, isExecutingOta)
 
-def OTAAddExecuteUpdate(builder, executeUpdate):
+def OTAAddExecuteUpdate(builder, executeUpdate) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(executeUpdate), 0)
 
-def AddExecuteUpdate(builder, executeUpdate):
+def AddExecuteUpdate(builder, executeUpdate) -> None:
     OTAAddExecuteUpdate(builder, executeUpdate)
 
-def OTAAddCheckForUpdate(builder, checkForUpdate):
+def OTAAddCheckForUpdate(builder, checkForUpdate) -> None:
     builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(checkForUpdate), 0)
 
-def AddCheckForUpdate(builder, checkForUpdate):
+def AddCheckForUpdate(builder, checkForUpdate) -> None:
     OTAAddCheckForUpdate(builder, checkForUpdate)
 
 def OTAEnd(builder):

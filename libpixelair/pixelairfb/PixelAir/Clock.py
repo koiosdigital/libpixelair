@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Clock(object):
+class Clock:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Clock(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Clock
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Clock
@@ -50,22 +51,22 @@ class Clock(object):
             return obj
         return None
 
-def ClockStart(builder):
+def ClockStart(builder) -> None:
     builder.StartObject(2)
 
-def Start(builder):
+def Start(builder) -> None:
     ClockStart(builder)
 
-def ClockAddUsesDaylightSavings(builder, usesDaylightSavings):
+def ClockAddUsesDaylightSavings(builder, usesDaylightSavings) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(usesDaylightSavings), 0)
 
-def AddUsesDaylightSavings(builder, usesDaylightSavings):
+def AddUsesDaylightSavings(builder, usesDaylightSavings) -> None:
     ClockAddUsesDaylightSavings(builder, usesDaylightSavings)
 
-def ClockAddUtcOffset(builder, utcOffset):
+def ClockAddUtcOffset(builder, utcOffset) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(utcOffset), 0)
 
-def AddUtcOffset(builder, utcOffset):
+def AddUtcOffset(builder, utcOffset) -> None:
     ClockAddUtcOffset(builder, utcOffset)
 
 def ClockEnd(builder):

@@ -1,5 +1,4 @@
-"""
-PixelAir Device Discovery Service.
+"""PixelAir Device Discovery Service.
 
 This module provides the discovery service for finding PixelAir devices
 on the local network. Discovery works by:
@@ -26,6 +25,7 @@ and resolved to IP via ARP table lookups.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import re
@@ -34,9 +34,8 @@ from dataclasses import dataclass, replace
 
 from pythonosc.osc_message_builder import OscMessageBuilder
 
-from .udp_listener import UDPListener, PacketHandler, NetworkInterface
-from .arp import lookup_ip_by_mac, lookup_mac_by_ip, normalize_mac, warm_arp_cache
-
+from .arp import lookup_ip_by_mac, normalize_mac
+from .udp_listener import PacketHandler, UDPListener
 
 # Discovery broadcast port
 DISCOVERY_PORT = 9090
@@ -50,8 +49,7 @@ DISCOVERY_RESPONSE_PATTERN = re.compile(rb'^\$(\{.*\})$', re.DOTALL)
 
 @dataclass
 class DiscoveredDevice:
-    """
-    Represents a discovered PixelAir device.
+    """Represents a discovered PixelAir device.
 
     Basic discovery returns serial_number, ip_address, and state_counter.
     Additional fields (model, nickname, firmware_version, mac_address) are
@@ -78,18 +76,18 @@ class DiscoveredDevice:
     firmware_version: str | None = None
 
     def __hash__(self) -> int:
-        # Use serial_number as primary identifier
+        """Return hash based on serial_number for use in sets/dicts."""
         return hash(self.serial_number)
 
     def __eq__(self, other: object) -> bool:
+        """Check equality based on serial_number."""
         if not isinstance(other, DiscoveredDevice):
             return False
         return self.serial_number == other.serial_number
 
     @property
     def has_full_info(self) -> bool:
-        """
-        Check if full device info has been fetched.
+        """Check if full device info has been fetched.
 
         Returns:
             True if model and mac_address are populated.
@@ -98,8 +96,7 @@ class DiscoveredDevice:
 
     @property
     def display_name(self) -> str:
-        """
-        Get a human-readable display name for the device.
+        """Get a human-readable display name for the device.
 
         Returns:
             The nickname if set, otherwise model, otherwise serial number.
@@ -115,8 +112,7 @@ type DiscoveryCallback = (
 
 
 class DiscoveryHandler(PacketHandler):
-    """
-    Packet handler for processing discovery responses.
+    """Packet handler for processing discovery responses.
 
     This handler parses the JSON discovery response from PixelAir devices
     and invokes the registered callback for each discovered device.
@@ -126,9 +122,8 @@ class DiscoveryHandler(PacketHandler):
         self,
         callback: DiscoveryCallback,
         logger: logging.Logger
-    ):
-        """
-        Initialize the discovery handler.
+    ) -> None:
+        """Initialize the discovery handler.
 
         Args:
             callback: Function to call when a device is discovered.
@@ -140,17 +135,17 @@ class DiscoveryHandler(PacketHandler):
     async def handle_packet(
         self,
         data: bytes,
-        source_address: tuple[str, int]
+        source_address: tuple[str, int],  # noqa: ARG002
     ) -> bool:
-        """
-        Handle an incoming UDP packet.
+        """Handle an incoming UDP packet.
 
         Attempts to parse the packet as a discovery response. If successful,
         invokes the discovery callback.
 
         Args:
             data: The raw packet data.
-            source_address: Tuple of (ip_address, port) of the sender.
+            source_address: Tuple of (ip_address, port) of the sender (unused but
+                required by PacketHandler protocol).
 
         Returns:
             True if this was a discovery response, False otherwise.
@@ -207,8 +202,7 @@ class DiscoveryHandler(PacketHandler):
             return True
 
     async def _invoke_callback(self, device: DiscoveredDevice) -> None:
-        """
-        Invoke the discovery callback.
+        """Invoke the discovery callback.
 
         Args:
             device: The discovered device.
@@ -258,9 +252,8 @@ class DiscoveryService:
                     device = await discovery.verify_device(ip)
     """
 
-    def __init__(self, listener: UDPListener):
-        """
-        Initialize the discovery service.
+    def __init__(self, listener: UDPListener) -> None:
+        """Initialize the discovery service.
 
         Args:
             listener: The UDPListener to use for sending and receiving packets.
@@ -285,8 +278,7 @@ class DiscoveryService:
 
     @property
     def discovered_devices(self) -> list[DiscoveredDevice]:
-        """
-        Get list of devices discovered during continuous discovery.
+        """Get list of devices discovered during continuous discovery.
 
         Returns:
             List of discovered devices (may be empty if not in continuous mode).
@@ -299,8 +291,7 @@ class DiscoveryService:
         broadcast_count: int = 3,
         broadcast_interval: float = 1.0
     ) -> list[DiscoveredDevice]:
-        """
-        Perform a one-shot discovery scan.
+        """Perform a one-shot discovery scan.
 
         This method broadcasts discovery messages and waits for responses.
         Multiple broadcasts are sent to improve reliability.
@@ -346,10 +337,8 @@ class DiscoveryService:
 
             # Cancel broadcast task if still running
             broadcast_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await broadcast_task
-            except asyncio.CancelledError:
-                pass
 
         finally:
             self._listener.remove_handler(handler)
@@ -368,8 +357,7 @@ class DiscoveryService:
         broadcast_interval: float = 1.0,
         state_timeout: float = 10.0
     ) -> list[DiscoveredDevice]:
-        """
-        Perform discovery and fetch full device info for each device.
+        """Perform discovery and fetch full device info for each device.
 
         This method first discovers devices, then fetches the full state
         from each to populate model, nickname, firmware_version, and mac_address.
@@ -417,8 +405,7 @@ class DiscoveryService:
         device: DiscoveredDevice,
         timeout: float = 10.0
     ) -> DiscoveredDevice:
-        """
-        Fetch full device information via /getState.
+        """Fetch full device information via /getState.
 
         This method sends a getState command to the device and parses the
         FlatBuffer response to extract model, nickname, firmware, and MAC.
@@ -489,8 +476,7 @@ class DiscoveryService:
         ip_address: str,
         timeout: float = 5.0
     ) -> DiscoveredDevice | None:
-        """
-        Verify a device at a specific IP address.
+        """Verify a device at a specific IP address.
 
         Sends a discovery message directly to the device and waits for
         a response. This can be used to confirm a device is reachable
@@ -536,7 +522,7 @@ class DiscoveryService:
             # Wait for response
             try:
                 await asyncio.wait_for(response_received.wait(), timeout)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._logger.debug(
                     "Verification timeout for device at %s",
                     ip_address
@@ -552,8 +538,7 @@ class DiscoveryService:
         mac_address: str,
         use_cache: bool = True
     ) -> str | None:
-        """
-        Resolve a MAC address to an IP address.
+        """Resolve a MAC address to an IP address.
 
         First checks the internal cache of discovered devices, then falls
         back to the system ARP table.
@@ -593,8 +578,7 @@ class DiscoveryService:
         timeout: float = 5.0,
         warm_arp: bool = True
     ) -> DiscoveredDevice | None:
-        """
-        Find and verify a device by its MAC address.
+        """Find and verify a device by its MAC address.
 
         This method resolves the MAC to IP via ARP table, then verifies
         the device is a PixelAir device by sending a discovery request.
@@ -641,8 +625,7 @@ class DiscoveryService:
         serial_number: str,
         timeout: float = 5.0
     ) -> DiscoveredDevice | None:
-        """
-        Find a device by its serial number via broadcast discovery.
+        """Find a device by its serial number via broadcast discovery.
 
         This method broadcasts discovery messages and waits for a response
         from a device with the matching serial number.
@@ -679,7 +662,7 @@ class DiscoveryService:
             # Wait for matching device
             try:
                 await asyncio.wait_for(found_event.wait(), timeout)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._logger.debug(
                     "Device with serial %s not found within timeout",
                     serial_number
@@ -697,8 +680,7 @@ class DiscoveryService:
         initial_scan: bool = True,
         fetch_full_info: bool = False
     ) -> None:
-        """
-        Start continuous device discovery.
+        """Start continuous device discovery.
 
         This method starts a background task that periodically broadcasts
         discovery messages and invokes the callback for each discovered device.
@@ -773,8 +755,7 @@ class DiscoveryService:
         )
 
     async def stop_continuous(self) -> None:
-        """
-        Stop continuous device discovery.
+        """Stop continuous device discovery.
 
         This method stops the background discovery task and removes the
         packet handler. Discovered devices are preserved.
@@ -786,10 +767,8 @@ class DiscoveryService:
 
         if self._continuous_task:
             self._continuous_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._continuous_task
-            except asyncio.CancelledError:
-                pass
             self._continuous_task = None
 
         if self._continuous_handler:
@@ -799,8 +778,7 @@ class DiscoveryService:
         self._logger.info("Stopped continuous discovery")
 
     async def clear_discovered_devices(self) -> None:
-        """
-        Clear the list of discovered devices.
+        """Clear the list of discovered devices.
 
         This resets the deduplication cache, so the next discovery scan
         will re-notify for all devices found.
@@ -813,8 +791,7 @@ class DiscoveryService:
         self,
         source_ip: str | None = None
     ) -> bytes:
-        """
-        Build an OSC discovery message.
+        """Build an OSC discovery message.
 
         Args:
             source_ip: If provided, encode this IP address as ASCII int params.
@@ -837,8 +814,7 @@ class DiscoveryService:
         count: int,
         interval: float
     ) -> None:
-        """
-        Send multiple discovery broadcasts.
+        """Send multiple discovery broadcasts.
 
         Args:
             count: Number of broadcasts to send.
@@ -850,9 +826,7 @@ class DiscoveryService:
                 await asyncio.sleep(interval)
 
     async def _broadcast_discovery(self) -> None:
-        """
-        Broadcast discovery message on all interfaces.
-        """
+        """Broadcast discovery message on all interfaces."""
         for interface in self._listener.interfaces:
             try:
                 # Build message with this interface's IP
@@ -881,8 +855,7 @@ class DiscoveryService:
                 )
 
     async def _continuous_discovery_loop(self, initial_scan: bool) -> None:
-        """
-        Background task for continuous discovery.
+        """Background task for continuous discovery.
 
         Args:
             initial_scan: Whether to perform an immediate scan.

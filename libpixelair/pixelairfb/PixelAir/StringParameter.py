@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class StringParameter(object):
+class StringParameter:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class StringParameter(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # StringParameter
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # StringParameter
@@ -56,34 +57,34 @@ class StringParameter(object):
             return self._tab.String(o + self._tab.Pos)
         return None
 
-def StringParameterStart(builder):
+def StringParameterStart(builder) -> None:
     builder.StartObject(4)
 
-def Start(builder):
+def Start(builder) -> None:
     StringParameterStart(builder)
 
-def StringParameterAddLabel(builder, label):
+def StringParameterAddLabel(builder, label) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(label), 0)
 
-def AddLabel(builder, label):
+def AddLabel(builder, label) -> None:
     StringParameterAddLabel(builder, label)
 
-def StringParameterAddRoute(builder, route):
+def StringParameterAddRoute(builder, route) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(route), 0)
 
-def AddRoute(builder, route):
+def AddRoute(builder, route) -> None:
     StringParameterAddRoute(builder, route)
 
-def StringParameterAddType(builder, type):
+def StringParameterAddType(builder, type) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(type), 0)
 
-def AddType(builder, type):
+def AddType(builder, type) -> None:
     StringParameterAddType(builder, type)
 
-def StringParameterAddValue(builder, value):
+def StringParameterAddValue(builder, value) -> None:
     builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(value), 0)
 
-def AddValue(builder, value):
+def AddValue(builder, value) -> None:
     StringParameterAddValue(builder, value)
 
 def StringParameterEnd(builder):

@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Audio(object):
+class Audio:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Audio(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Audio
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Audio
@@ -72,34 +73,34 @@ class Audio(object):
             return obj
         return None
 
-def AudioStart(builder):
+def AudioStart(builder) -> None:
     builder.StartObject(4)
 
-def Start(builder):
+def Start(builder) -> None:
     AudioStart(builder)
 
-def AudioAddFilter(builder, filter):
+def AudioAddFilter(builder, filter) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(filter), 0)
 
-def AddFilter(builder, filter):
+def AddFilter(builder, filter) -> None:
     AudioAddFilter(builder, filter)
 
-def AudioAddRelease(builder, release):
+def AudioAddRelease(builder, release) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(release), 0)
 
-def AddRelease(builder, release):
+def AddRelease(builder, release) -> None:
     AudioAddRelease(builder, release)
 
-def AudioAddGain(builder, gain):
+def AudioAddGain(builder, gain) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(gain), 0)
 
-def AddGain(builder, gain):
+def AddGain(builder, gain) -> None:
     AudioAddGain(builder, gain)
 
-def AudioAddAttack(builder, attack):
+def AudioAddAttack(builder, attack) -> None:
     builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(attack), 0)
 
-def AddAttack(builder, attack):
+def AddAttack(builder, attack) -> None:
     AudioAddAttack(builder, attack)
 
 def AudioEnd(builder):

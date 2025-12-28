@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Notification(object):
+class Notification:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Notification(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Notification
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Notification
@@ -39,16 +40,16 @@ class Notification(object):
             return obj
         return None
 
-def NotificationStart(builder):
+def NotificationStart(builder) -> None:
     builder.StartObject(1)
 
-def Start(builder):
+def Start(builder) -> None:
     NotificationStart(builder)
 
-def NotificationAddNotify(builder, notify):
+def NotificationAddNotify(builder, notify) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(notify), 0)
 
-def AddNotify(builder, notify):
+def AddNotify(builder, notify) -> None:
     NotificationAddNotify(builder, notify)
 
 def NotificationEnd(builder):

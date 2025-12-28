@@ -76,6 +76,9 @@ ignore_errors = true
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+exclude = [
+    "libpixelair/pixelairfb",  # Generated FlatBuffer code
+]
 
 [tool.ruff.lint]
 select = [
@@ -99,8 +102,6 @@ ignore = [
     "D104",   # Missing docstring in public package
     "D203",   # 1 blank line required before class docstring
     "D213",   # Multi-line docstring summary should start at the second line
-    "ANN101", # Missing type annotation for self
-    "ANN102", # Missing type annotation for cls
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -109,6 +110,7 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D", "ANN"]
 "examples/*" = ["D", "ANN"]
+"libpixelair/_internal.py" = ["ANN401"]  # FlatBuffer code requires Any
 
 # Pytest configuration
 [tool.pytest.ini_options]

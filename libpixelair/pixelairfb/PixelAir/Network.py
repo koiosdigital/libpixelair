@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Network(object):
+class Network:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Network(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Network
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Network
@@ -49,28 +50,28 @@ class Network(object):
             return self._tab.String(o + self._tab.Pos)
         return None
 
-def NetworkStart(builder):
+def NetworkStart(builder) -> None:
     builder.StartObject(3)
 
-def Start(builder):
+def Start(builder) -> None:
     NetworkStart(builder)
 
-def NetworkAddMacAddress(builder, macAddress):
+def NetworkAddMacAddress(builder, macAddress) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(macAddress), 0)
 
-def AddMacAddress(builder, macAddress):
+def AddMacAddress(builder, macAddress) -> None:
     NetworkAddMacAddress(builder, macAddress)
 
-def NetworkAddIpAddress(builder, ipAddress):
+def NetworkAddIpAddress(builder, ipAddress) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(ipAddress), 0)
 
-def AddIpAddress(builder, ipAddress):
+def AddIpAddress(builder, ipAddress) -> None:
     NetworkAddIpAddress(builder, ipAddress)
 
-def NetworkAddSubnet(builder, subnet):
+def NetworkAddSubnet(builder, subnet) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(subnet), 0)
 
-def AddSubnet(builder, subnet):
+def AddSubnet(builder, subnet) -> None:
     NetworkAddSubnet(builder, subnet)
 
 def NetworkEnd(builder):

@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Dashboard(object):
+class Dashboard:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Dashboard(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Dashboard
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Dashboard
@@ -53,16 +54,16 @@ class Dashboard(object):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
         return o == 0
 
-def DashboardStart(builder):
+def DashboardStart(builder) -> None:
     builder.StartObject(1)
 
-def Start(builder):
+def Start(builder) -> None:
     DashboardStart(builder)
 
-def DashboardAddParameters(builder, parameters):
+def DashboardAddParameters(builder, parameters) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(parameters), 0)
 
-def AddParameters(builder, parameters):
+def AddParameters(builder, parameters) -> None:
     DashboardAddParameters(builder, parameters)
 
 def DashboardStartParametersVector(builder, numElems):

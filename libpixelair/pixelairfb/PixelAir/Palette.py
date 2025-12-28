@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Palette(object):
+class Palette:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Palette(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Palette
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Palette
@@ -50,22 +51,22 @@ class Palette(object):
             return obj
         return None
 
-def PaletteStart(builder):
+def PaletteStart(builder) -> None:
     builder.StartObject(2)
 
-def Start(builder):
+def Start(builder) -> None:
     PaletteStart(builder)
 
-def PaletteAddSaturation(builder, saturation):
+def PaletteAddSaturation(builder, saturation) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(saturation), 0)
 
-def AddSaturation(builder, saturation):
+def AddSaturation(builder, saturation) -> None:
     PaletteAddSaturation(builder, saturation)
 
-def PaletteAddHue(builder, hue):
+def PaletteAddHue(builder, hue) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(hue), 0)
 
-def AddHue(builder, hue):
+def AddHue(builder, hue) -> None:
     PaletteAddHue(builder, hue)
 
 def PaletteEnd(builder):

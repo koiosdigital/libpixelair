@@ -1,5 +1,4 @@
-"""
-Internal device management utilities.
+"""Internal device management utilities.
 
 This module contains internal implementation details for device state management,
 packet handling, and FlatBuffer parsing. These are not part of the public API.
@@ -8,6 +7,7 @@ packet handling, and FlatBuffer parsing. These are not part of the public API.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import re
@@ -16,22 +16,20 @@ from typing import Any
 
 from pythonosc.osc_message_builder import OscMessageBuilder
 
-from .udp_listener import UDPListener, PacketHandler
-from .packet_assembler import PacketAssembler
-from .arp import lookup_ip_by_mac, normalize_mac
-from ._types import (
-    DeviceState,
-    DeviceMode,
-    SceneInfo,
-    PaletteState,
-    PaletteRoutes,
-    ControlRoutes,
-)
-
 # Import FlatBuffer generated classes
 from . import pixelairfb  # noqa: F401
+from ._types import (
+    ControlRoutes,
+    DeviceMode,
+    DeviceState,
+    PaletteRoutes,
+    PaletteState,
+    SceneInfo,
+)
+from .arp import lookup_ip_by_mac, normalize_mac
+from .packet_assembler import PacketAssembler
 from .pixelairfb.PixelAir.PixelAirDevice import PixelAirDevice as PixelAirDeviceFB
-
+from .udp_listener import PacketHandler, UDPListener
 
 # Protocol constants
 DEVICE_COMMAND_PORT = 9090
@@ -52,7 +50,7 @@ type StateChangeCallback = (
 class DevicePacketHandler(PacketHandler):
     """Packet handler that routes packets to the appropriate device."""
 
-    def __init__(self, connection: DeviceConnection, logger: logging.Logger):
+    def __init__(self, connection: DeviceConnection, logger: logging.Logger) -> None:
         self._connection = connection
         self._logger = logger
 
@@ -79,7 +77,7 @@ class DiscoveryResponseHandler(PacketHandler):
         self,
         target_ip: str,
         callback: Callable[[dict[str, Any]], None]
-    ):
+    ) -> None:
         self._target_ip = target_ip
         self._callback = callback
         self._logger = logging.getLogger("pixelair.device.discovery_handler")
@@ -109,8 +107,7 @@ class DiscoveryResponseHandler(PacketHandler):
 
 
 class DeviceConnection:
-    """
-    Internal device connection manager.
+    """Internal device connection manager.
 
     Handles low-level device communication: packet assembly, state parsing,
     command sending, and polling. This is used by PixelAirDevice.
@@ -123,7 +120,7 @@ class DeviceConnection:
         serial_number: str,
         mac_address: str | None,
         logger: logging.Logger
-    ):
+    ) -> None:
         self._ip_address = ip_address
         self._listener = listener
         self._serial_number = serial_number
@@ -277,11 +274,15 @@ class DeviceConnection:
             ),
             scene_palette=PaletteState(
                 hue=self._state.scene_palette.hue if self._state.scene_palette else 0.0,
-                saturation=self._state.scene_palette.saturation if self._state.scene_palette else 0.0,
+                saturation=(
+                    self._state.scene_palette.saturation if self._state.scene_palette else 0.0
+                ),
             ),
             manual_palette=PaletteState(
                 hue=self._state.manual_palette.hue if self._state.manual_palette else 0.0,
-                saturation=self._state.manual_palette.saturation if self._state.manual_palette else 0.0,
+                saturation=(
+                    self._state.manual_palette.saturation if self._state.manual_palette else 0.0
+                ),
             ),
         )
 
@@ -372,10 +373,8 @@ class DeviceConnection:
 
         if self._polling_task:
             self._polling_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._polling_task
-            except asyncio.CancelledError:
-                pass
             self._polling_task = None
 
         if self._discovery_handler:
@@ -386,7 +385,7 @@ class DeviceConnection:
 
     async def _polling_loop(self) -> None:
         """Background polling task with efficient timing."""
-        from .discovery import DISCOVERY_ROUTE, DISCOVERY_PORT
+        from .discovery import DISCOVERY_PORT, DISCOVERY_ROUTE
 
         while self._polling_running:
             loop = asyncio.get_running_loop()
@@ -407,14 +406,20 @@ class DeviceConnection:
                     response = self._discovery_response
                     if response:
                         state_counter = response.get("state_counter")
-                        if state_counter is not None:
-                            if self._state_counter is None or state_counter != self._state_counter:
-                                self._state_counter = state_counter
-                                self._logger.debug("State counter changed, fetching state...")
-                                try:
-                                    await self.request_state(timeout=10.0)
-                                except Exception as e:
-                                    self._logger.warning("Error fetching state: %s", e)
+                        state_changed = (
+                            state_counter is not None
+                            and (
+                                self._state_counter is None
+                                or state_counter != self._state_counter
+                            )
+                        )
+                        if state_changed:
+                            self._state_counter = state_counter
+                            self._logger.debug("State counter changed, fetching state...")
+                            try:
+                                await self.request_state(timeout=10.0)
+                            except Exception as e:
+                                self._logger.warning("Error fetching state: %s", e)
 
             except Exception as e:
                 self._logger.warning("Poll error: %s", e)
@@ -457,7 +462,11 @@ class DeviceConnection:
 
         if discovered:
             if discovered.ip_address != self._ip_address:
-                self._logger.info("Updated IP via discovery: %s -> %s", self._ip_address, discovered.ip_address)
+                self._logger.info(
+                    "Updated IP via discovery: %s -> %s",
+                    self._ip_address,
+                    discovered.ip_address,
+                )
                 self.ip_address = discovered.ip_address
             return True
 
@@ -559,13 +568,17 @@ class DeviceConnection:
                             index=scene.Index(),
                         ))
 
-                if scene_mode.Palette():
-                    if self._state.scene_palette and self._routes.scene_palette:
-                        self._extract_palette(
-                            scene_mode.Palette(),
-                            self._state.scene_palette,
-                            self._routes.scene_palette
-                        )
+                scene_palette = scene_mode.Palette()
+                if (
+                    scene_palette
+                    and self._state.scene_palette
+                    and self._routes.scene_palette
+                ):
+                    self._extract_palette(
+                        scene_palette,
+                        self._state.scene_palette,
+                        self._routes.scene_palette,
+                    )
 
             if engine.ManualMode():
                 manual_mode = engine.ManualMode()
@@ -582,23 +595,31 @@ class DeviceConnection:
                     if anim:
                         self._state.manual_animations.append(anim.decode("utf-8"))
 
-                if manual_mode.Palette():
-                    if self._state.manual_palette and self._routes.manual_palette:
-                        self._extract_palette(
-                            manual_mode.Palette(),
-                            self._state.manual_palette,
-                            self._routes.manual_palette
-                        )
+                manual_palette = manual_mode.Palette()
+                if (
+                    manual_palette
+                    and self._state.manual_palette
+                    and self._routes.manual_palette
+                ):
+                    self._extract_palette(
+                        manual_palette,
+                        self._state.manual_palette,
+                        self._routes.manual_palette,
+                    )
 
             if engine.AutoMode():
                 auto_mode = engine.AutoMode()
-                if auto_mode.Palette():
-                    if self._state.auto_palette and self._routes.auto_palette:
-                        self._extract_palette(
-                            auto_mode.Palette(),
-                            self._state.auto_palette,
-                            self._routes.auto_palette
-                        )
+                auto_palette = auto_mode.Palette()
+                if (
+                    auto_palette
+                    and self._state.auto_palette
+                    and self._routes.auto_palette
+                ):
+                    self._extract_palette(
+                        auto_palette,
+                        self._state.auto_palette,
+                        self._routes.auto_palette,
+                    )
 
     def _extract_palette(
         self,

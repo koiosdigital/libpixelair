@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Notifications(object):
+class Notifications:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Notifications(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Notifications
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Notifications
@@ -72,34 +73,34 @@ class Notifications(object):
             return obj
         return None
 
-def NotificationsStart(builder):
+def NotificationsStart(builder) -> None:
     builder.StartObject(4)
 
-def Start(builder):
+def Start(builder) -> None:
     NotificationsStart(builder)
 
-def NotificationsAddHighlight(builder, highlight):
+def NotificationsAddHighlight(builder, highlight) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(highlight), 0)
 
-def AddHighlight(builder, highlight):
+def AddHighlight(builder, highlight) -> None:
     NotificationsAddHighlight(builder, highlight)
 
-def NotificationsAddFailure(builder, failure):
+def NotificationsAddFailure(builder, failure) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(failure), 0)
 
-def AddFailure(builder, failure):
+def AddFailure(builder, failure) -> None:
     NotificationsAddFailure(builder, failure)
 
-def NotificationsAddInfo(builder, info):
+def NotificationsAddInfo(builder, info) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(info), 0)
 
-def AddInfo(builder, info):
+def AddInfo(builder, info) -> None:
     NotificationsAddInfo(builder, info)
 
-def NotificationsAddSuccess(builder, success):
+def NotificationsAddSuccess(builder, success) -> None:
     builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(success), 0)
 
-def AddSuccess(builder, success):
+def AddSuccess(builder, success) -> None:
     NotificationsAddSuccess(builder, success)
 
 def NotificationsEnd(builder):

@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class LightSensorSettings(object):
+class LightSensorSettings:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class LightSensorSettings(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # LightSensorSettings
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # LightSensorSettings
@@ -39,16 +40,16 @@ class LightSensorSettings(object):
             return obj
         return None
 
-def LightSensorSettingsStart(builder):
+def LightSensorSettingsStart(builder) -> None:
     builder.StartObject(1)
 
-def Start(builder):
+def Start(builder) -> None:
     LightSensorSettingsStart(builder)
 
-def LightSensorSettingsAddEnabled(builder, enabled):
+def LightSensorSettingsAddEnabled(builder, enabled) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(enabled), 0)
 
-def AddEnabled(builder, enabled):
+def AddEnabled(builder, enabled) -> None:
     LightSensorSettingsAddEnabled(builder, enabled)
 
 def LightSensorSettingsEnd(builder):

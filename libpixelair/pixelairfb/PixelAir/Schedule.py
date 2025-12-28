@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Schedule(object):
+class Schedule:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Schedule(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Schedule
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Schedule
@@ -50,22 +51,22 @@ class Schedule(object):
             return obj
         return None
 
-def ScheduleStart(builder):
+def ScheduleStart(builder) -> None:
     builder.StartObject(2)
 
-def Start(builder):
+def Start(builder) -> None:
     ScheduleStart(builder)
 
-def ScheduleAddTimeOfDayInSeconds(builder, timeOfDayInSeconds):
+def ScheduleAddTimeOfDayInSeconds(builder, timeOfDayInSeconds) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(timeOfDayInSeconds), 0)
 
-def AddTimeOfDayInSeconds(builder, timeOfDayInSeconds):
+def AddTimeOfDayInSeconds(builder, timeOfDayInSeconds) -> None:
     ScheduleAddTimeOfDayInSeconds(builder, timeOfDayInSeconds)
 
-def ScheduleAddEnabled(builder, enabled):
+def ScheduleAddEnabled(builder, enabled) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(enabled), 0)
 
-def AddEnabled(builder, enabled):
+def AddEnabled(builder, enabled) -> None:
     ScheduleAddEnabled(builder, enabled)
 
 def ScheduleEnd(builder):

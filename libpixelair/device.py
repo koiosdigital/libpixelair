@@ -1,5 +1,4 @@
-"""
-PixelAir Device public API.
+"""PixelAir Device public API.
 
 This module provides the PixelAirDevice class - the main interface for
 controlling PixelAir devices (Fluora, Monos, etc.).
@@ -24,41 +23,44 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING
 
-from .udp_listener import UDPListener
-from .discovery import DiscoveredDevice
-from .arp import normalize_mac, lookup_ip_by_mac
-from ._types import (
-    DeviceState,
-    DeviceMode,
-    SceneInfo,
-    EffectInfo,
-    PaletteState,
-    PaletteRoutes,
-    ControlRoutes,
-)
 from ._internal import (
-    DeviceConnection,
+    DEFAULT_STATE_TIMEOUT,
     DEVICE_COMMAND_PORT,
     DEVICE_CONTROL_PORT,
     GET_STATE_ROUTE,
-    DEFAULT_STATE_TIMEOUT,
+    DeviceConnection,
 )
+from ._types import (
+    ControlRoutes,
+    DeviceMode,
+    DeviceState,
+    EffectInfo,
+    PaletteRoutes,
+    PaletteState,
+    SceneInfo,
+)
+from .arp import lookup_ip_by_mac, normalize_mac
+
+if TYPE_CHECKING:
+    from .discovery import DiscoveredDevice
+    from .udp_listener import UDPListener
 
 # Re-export types for backward compatibility
 __all__ = [
-    "PixelAirDevice",
-    "DeviceState",
-    "DeviceMode",
-    "SceneInfo",
-    "EffectInfo",
-    "PaletteState",
-    "PaletteRoutes",
-    "ControlRoutes",
-    "StateChangeCallback",
     "DEVICE_COMMAND_PORT",
     "DEVICE_CONTROL_PORT",
     "GET_STATE_ROUTE",
+    "ControlRoutes",
+    "DeviceMode",
+    "DeviceState",
+    "EffectInfo",
+    "PaletteRoutes",
+    "PaletteState",
+    "PixelAirDevice",
+    "SceneInfo",
+    "StateChangeCallback",
 ]
 
 # Type alias for state change callbacks (Python 3.12+)
@@ -103,9 +105,8 @@ class PixelAirDevice:
         serial_number: str,
         mac_address: str,
         _internal: bool = False
-    ):
-        """
-        Initialize a PixelAirDevice.
+    ) -> None:
+        """Initialize a PixelAirDevice.
 
         Note: Prefer using classmethods from_identifiers(), from_discovered(),
         or from_mac_address() instead of direct construction.
@@ -152,8 +153,7 @@ class PixelAirDevice:
         discovered: DiscoveredDevice,
         listener: UDPListener
     ) -> PixelAirDevice:
-        """
-        Create a device from a discovery result.
+        """Create a device from a discovery result.
 
         Args:
             discovered: Discovery result (must have mac_address).
@@ -187,8 +187,7 @@ class PixelAirDevice:
         listener: UDPListener,
         timeout: float = 5.0
     ) -> PixelAirDevice | None:
-        """
-        Create a device from stored MAC and serial number.
+        """Create a device from stored MAC and serial number.
 
         This is the preferred method for Home Assistant. Uses a bulletproof
         resolution strategy:
@@ -262,8 +261,7 @@ class PixelAirDevice:
         listener: UDPListener,
         timeout: float = 5.0
     ) -> PixelAirDevice | None:
-        """
-        Create a device by resolving its MAC address.
+        """Create a device by resolving its MAC address.
 
         Args:
             mac_address: The device's MAC address.
@@ -390,8 +388,7 @@ class PixelAirDevice:
     # =========================================================================
 
     async def get_state(self, timeout: float = DEFAULT_STATE_TIMEOUT) -> DeviceState:
-        """
-        Request and wait for the full device state.
+        """Request and wait for the full device state.
 
         Args:
             timeout: Maximum wait time in seconds.
@@ -407,12 +404,19 @@ class PixelAirDevice:
 
     def add_state_callback(self, callback: StateChangeCallback) -> None:
         """Register a callback for state changes."""
+        import asyncio
+        from typing import Any
+
+        # Track background tasks to prevent garbage collection
+        background_tasks: set[asyncio.Task[Any]] = set()
+
         # Wrap callback to pass self instead of connection
         def wrapper(_conn: object, state: DeviceState) -> None:
             result = callback(self, state)
             if hasattr(result, "__await__"):
-                import asyncio
-                asyncio.create_task(result)  # type: ignore[arg-type]
+                task: asyncio.Task[Any] = asyncio.create_task(result)  # type: ignore[arg-type]
+                background_tasks.add(task)
+                task.add_done_callback(background_tasks.discard)
 
         self._conn.add_state_callback(wrapper)
 
@@ -428,8 +432,7 @@ class PixelAirDevice:
     # =========================================================================
 
     async def start_polling(self, interval: float = 2.5) -> None:
-        """
-        Start polling for state changes.
+        """Start polling for state changes.
 
         Uses efficient state_counter checking - only fetches full state
         when it actually changes.
@@ -452,8 +455,7 @@ class PixelAirDevice:
     # =========================================================================
 
     async def resolve_ip(self, timeout: float = 5.0) -> bool:
-        """
-        Re-resolve the device's IP address.
+        """Re-resolve the device's IP address.
 
         Uses bulletproof fallback: ARP table -> broadcast discovery.
 
@@ -466,8 +468,7 @@ class PixelAirDevice:
         return await self._conn.resolve_ip(timeout)
 
     async def update_ip_from_mac(self) -> bool:
-        """
-        Update IP from MAC via ARP table.
+        """Update IP from MAC via ARP table.
 
         Deprecated: Use resolve_ip() which includes fallback.
 
@@ -505,8 +506,7 @@ class PixelAirDevice:
         self._logger.info("Set power to %s", "ON" if on else "OFF")
 
     async def set_brightness(self, brightness: float) -> None:
-        """
-        Set the device brightness.
+        """Set the device brightness.
 
         Args:
             brightness: Brightness from 0.0 to 1.0.
@@ -535,8 +535,7 @@ class PixelAirDevice:
         self._logger.info("Set brightness to %.0f%%", brightness * 100)
 
     async def set_hue(self, hue: float) -> None:
-        """
-        Set the hue for the current mode's palette.
+        """Set the hue for the current mode's palette.
 
         Args:
             hue: Hue from 0.0 to 1.0.
@@ -565,8 +564,7 @@ class PixelAirDevice:
         self._logger.info("Set hue to %.2f", hue)
 
     async def set_saturation(self, saturation: float) -> None:
-        """
-        Set the saturation for the current mode's palette.
+        """Set the saturation for the current mode's palette.
 
         Args:
             saturation: Saturation from 0.0 to 1.0.
@@ -617,8 +615,7 @@ class PixelAirDevice:
         return state.auto_palette or PaletteState()
 
     async def set_mode(self, mode: DeviceMode) -> None:
-        """
-        Set the device display mode.
+        """Set the device display mode.
 
         Args:
             mode: The display mode (AUTO, SCENE, or MANUAL).
@@ -642,8 +639,7 @@ class PixelAirDevice:
         self._logger.info("Set mode to %s", mode.name)
 
     async def set_effect(self, effect_id: str) -> None:
-        """
-        Set the device effect by ID.
+        """Set the device effect by ID.
 
         Effect IDs:
         - "auto": Sets mode to AUTO
@@ -669,22 +665,21 @@ class PixelAirDevice:
                 scene_index = int(effect_id[6:])
                 await self._set_scene(scene_index)
                 return
-            except ValueError:
-                raise ValueError(f"Invalid scene effect ID: {effect_id}")
+            except ValueError as e:
+                raise ValueError(f"Invalid scene effect ID: {effect_id}") from e
 
         if effect_id.startswith("manual:"):
             try:
                 anim_index = int(effect_id[7:])
                 await self._set_manual_animation(anim_index)
                 return
-            except ValueError:
-                raise ValueError(f"Invalid manual effect ID: {effect_id}")
+            except ValueError as e:
+                raise ValueError(f"Invalid manual effect ID: {effect_id}") from e
 
         raise ValueError(f"Unknown effect ID: {effect_id}")
 
     async def set_effect_by_name(self, display_name: str) -> None:
-        """
-        Set the device effect by display name.
+        """Set the device effect by display name.
 
         Args:
             display_name: The effect display name.
@@ -750,6 +745,7 @@ class PixelAirDevice:
     # =========================================================================
 
     async def __aenter__(self) -> PixelAirDevice:
+        """Enter async context manager, registering the device."""
         await self.register()
         return self
 
@@ -759,14 +755,17 @@ class PixelAirDevice:
         exc_val: BaseException | None,
         exc_tb: object,
     ) -> None:
+        """Exit async context manager, unregistering the device."""
         await self.unregister()
 
     def __str__(self) -> str:
+        """Return a human-readable string representation."""
         state = self._conn.state
         name = state.nickname or state.model or "Unknown"
         return f"PixelAirDevice({name} @ {self._conn.ip_address})"
 
     def __repr__(self) -> str:
+        """Return a detailed string representation for debugging."""
         return (
             f"PixelAirDevice("
             f"ip={self._conn.ip_address}, "

@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class SceneMode(object):
+class SceneMode:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class SceneMode(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # SceneMode
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # SceneMode
@@ -75,22 +76,22 @@ class SceneMode(object):
             return obj
         return None
 
-def SceneModeStart(builder):
+def SceneModeStart(builder) -> None:
     builder.StartObject(3)
 
-def Start(builder):
+def Start(builder) -> None:
     SceneModeStart(builder)
 
-def SceneModeAddActiveSceneIndex(builder, activeSceneIndex):
+def SceneModeAddActiveSceneIndex(builder, activeSceneIndex) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(activeSceneIndex), 0)
 
-def AddActiveSceneIndex(builder, activeSceneIndex):
+def AddActiveSceneIndex(builder, activeSceneIndex) -> None:
     SceneModeAddActiveSceneIndex(builder, activeSceneIndex)
 
-def SceneModeAddScenes(builder, scenes):
+def SceneModeAddScenes(builder, scenes) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(scenes), 0)
 
-def AddScenes(builder, scenes):
+def AddScenes(builder, scenes) -> None:
     SceneModeAddScenes(builder, scenes)
 
 def SceneModeStartScenesVector(builder, numElems):
@@ -99,10 +100,10 @@ def SceneModeStartScenesVector(builder, numElems):
 def StartScenesVector(builder, numElems):
     return SceneModeStartScenesVector(builder, numElems)
 
-def SceneModeAddPalette(builder, palette):
+def SceneModeAddPalette(builder, palette) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(palette), 0)
 
-def AddPalette(builder, palette):
+def AddPalette(builder, palette) -> None:
     SceneModeAddPalette(builder, palette)
 
 def SceneModeEnd(builder):

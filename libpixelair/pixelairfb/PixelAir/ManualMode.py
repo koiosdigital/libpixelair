@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class ManualMode(object):
+class ManualMode:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class ManualMode(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # ManualMode
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # ManualMode
@@ -88,22 +89,22 @@ class ManualMode(object):
             return obj
         return None
 
-def ManualModeStart(builder):
+def ManualModeStart(builder) -> None:
     builder.StartObject(5)
 
-def Start(builder):
+def Start(builder) -> None:
     ManualModeStart(builder)
 
-def ManualModeAddLoadedAnimationIndex(builder, loadedAnimationIndex):
+def ManualModeAddLoadedAnimationIndex(builder, loadedAnimationIndex) -> None:
     builder.PrependInt32Slot(0, loadedAnimationIndex, 0)
 
-def AddLoadedAnimationIndex(builder, loadedAnimationIndex):
+def AddLoadedAnimationIndex(builder, loadedAnimationIndex) -> None:
     ManualModeAddLoadedAnimationIndex(builder, loadedAnimationIndex)
 
-def ManualModeAddAnimations(builder, animations):
+def ManualModeAddAnimations(builder, animations) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(animations), 0)
 
-def AddAnimations(builder, animations):
+def AddAnimations(builder, animations) -> None:
     ManualModeAddAnimations(builder, animations)
 
 def ManualModeStartAnimationsVector(builder, numElems):
@@ -112,22 +113,22 @@ def ManualModeStartAnimationsVector(builder, numElems):
 def StartAnimationsVector(builder, numElems):
     return ManualModeStartAnimationsVector(builder, numElems)
 
-def ManualModeAddDashboard(builder, dashboard):
+def ManualModeAddDashboard(builder, dashboard) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(dashboard), 0)
 
-def AddDashboard(builder, dashboard):
+def AddDashboard(builder, dashboard) -> None:
     ManualModeAddDashboard(builder, dashboard)
 
-def ManualModeAddActiveAnimationIndex(builder, activeAnimationIndex):
+def ManualModeAddActiveAnimationIndex(builder, activeAnimationIndex) -> None:
     builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(activeAnimationIndex), 0)
 
-def AddActiveAnimationIndex(builder, activeAnimationIndex):
+def AddActiveAnimationIndex(builder, activeAnimationIndex) -> None:
     ManualModeAddActiveAnimationIndex(builder, activeAnimationIndex)
 
-def ManualModeAddPalette(builder, palette):
+def ManualModeAddPalette(builder, palette) -> None:
     builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(palette), 0)
 
-def AddPalette(builder, palette):
+def AddPalette(builder, palette) -> None:
     ManualModeAddPalette(builder, palette)
 
 def ManualModeEnd(builder):

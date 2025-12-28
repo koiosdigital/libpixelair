@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class AutoMode(object):
+class AutoMode:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class AutoMode(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # AutoMode
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # AutoMode
@@ -39,16 +40,16 @@ class AutoMode(object):
             return obj
         return None
 
-def AutoModeStart(builder):
+def AutoModeStart(builder) -> None:
     builder.StartObject(1)
 
-def Start(builder):
+def Start(builder) -> None:
     AutoModeStart(builder)
 
-def AutoModeAddPalette(builder, palette):
+def AutoModeAddPalette(builder, palette) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(palette), 0)
 
-def AddPalette(builder, palette):
+def AddPalette(builder, palette) -> None:
     AutoModeAddPalette(builder, palette)
 
 def AutoModeEnd(builder):

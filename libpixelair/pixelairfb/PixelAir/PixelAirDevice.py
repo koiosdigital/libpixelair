@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class PixelAirDevice(object):
+class PixelAirDevice:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class PixelAirDevice(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # PixelAirDevice
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # PixelAirDevice
@@ -158,94 +159,94 @@ class PixelAirDevice(object):
             return obj
         return None
 
-def PixelAirDeviceStart(builder):
+def PixelAirDeviceStart(builder) -> None:
     builder.StartObject(14)
 
-def Start(builder):
+def Start(builder) -> None:
     PixelAirDeviceStart(builder)
 
-def PixelAirDeviceAddProtocol(builder, protocol):
+def PixelAirDeviceAddProtocol(builder, protocol) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(protocol), 0)
 
-def AddProtocol(builder, protocol):
+def AddProtocol(builder, protocol) -> None:
     PixelAirDeviceAddProtocol(builder, protocol)
 
-def PixelAirDeviceAddVersion(builder, version):
+def PixelAirDeviceAddVersion(builder, version) -> None:
     builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(version), 0)
 
-def AddVersion(builder, version):
+def AddVersion(builder, version) -> None:
     PixelAirDeviceAddVersion(builder, version)
 
-def PixelAirDeviceAddModel(builder, model):
+def PixelAirDeviceAddModel(builder, model) -> None:
     builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(model), 0)
 
-def AddModel(builder, model):
+def AddModel(builder, model) -> None:
     PixelAirDeviceAddModel(builder, model)
 
-def PixelAirDeviceAddMinMobileAppVersion(builder, minMobileAppVersion):
+def PixelAirDeviceAddMinMobileAppVersion(builder, minMobileAppVersion) -> None:
     builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(minMobileAppVersion), 0)
 
-def AddMinMobileAppVersion(builder, minMobileAppVersion):
+def AddMinMobileAppVersion(builder, minMobileAppVersion) -> None:
     PixelAirDeviceAddMinMobileAppVersion(builder, minMobileAppVersion)
 
-def PixelAirDeviceAddSerialNumber(builder, serialNumber):
+def PixelAirDeviceAddSerialNumber(builder, serialNumber) -> None:
     builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(serialNumber), 0)
 
-def AddSerialNumber(builder, serialNumber):
+def AddSerialNumber(builder, serialNumber) -> None:
     PixelAirDeviceAddSerialNumber(builder, serialNumber)
 
-def PixelAirDeviceAddRssi(builder, rssi):
+def PixelAirDeviceAddRssi(builder, rssi) -> None:
     builder.PrependInt32Slot(5, rssi, 0)
 
-def AddRssi(builder, rssi):
+def AddRssi(builder, rssi) -> None:
     PixelAirDeviceAddRssi(builder, rssi)
 
-def PixelAirDeviceAddNickname(builder, nickname):
+def PixelAirDeviceAddNickname(builder, nickname) -> None:
     builder.PrependUOffsetTRelativeSlot(6, flatbuffers.number_types.UOffsetTFlags.py_type(nickname), 0)
 
-def AddNickname(builder, nickname):
+def AddNickname(builder, nickname) -> None:
     PixelAirDeviceAddNickname(builder, nickname)
 
-def PixelAirDeviceAddNetwork(builder, network):
+def PixelAirDeviceAddNetwork(builder, network) -> None:
     builder.PrependUOffsetTRelativeSlot(7, flatbuffers.number_types.UOffsetTFlags.py_type(network), 0)
 
-def AddNetwork(builder, network):
+def AddNetwork(builder, network) -> None:
     PixelAirDeviceAddNetwork(builder, network)
 
-def PixelAirDeviceAddOta(builder, ota):
+def PixelAirDeviceAddOta(builder, ota) -> None:
     builder.PrependUOffsetTRelativeSlot(8, flatbuffers.number_types.UOffsetTFlags.py_type(ota), 0)
 
-def AddOta(builder, ota):
+def AddOta(builder, ota) -> None:
     PixelAirDeviceAddOta(builder, ota)
 
-def PixelAirDeviceAddAudio(builder, audio):
+def PixelAirDeviceAddAudio(builder, audio) -> None:
     builder.PrependUOffsetTRelativeSlot(9, flatbuffers.number_types.UOffsetTFlags.py_type(audio), 0)
 
-def AddAudio(builder, audio):
+def AddAudio(builder, audio) -> None:
     PixelAirDeviceAddAudio(builder, audio)
 
-def PixelAirDeviceAddNotifications(builder, notifications):
+def PixelAirDeviceAddNotifications(builder, notifications) -> None:
     builder.PrependUOffsetTRelativeSlot(10, flatbuffers.number_types.UOffsetTFlags.py_type(notifications), 0)
 
-def AddNotifications(builder, notifications):
+def AddNotifications(builder, notifications) -> None:
     PixelAirDeviceAddNotifications(builder, notifications)
 
-def PixelAirDeviceAddLightSensor(builder, lightSensor):
+def PixelAirDeviceAddLightSensor(builder, lightSensor) -> None:
     builder.PrependUOffsetTRelativeSlot(11, flatbuffers.number_types.UOffsetTFlags.py_type(lightSensor), 0)
 
-def AddLightSensor(builder, lightSensor):
+def AddLightSensor(builder, lightSensor) -> None:
     PixelAirDeviceAddLightSensor(builder, lightSensor)
 
-def PixelAirDeviceAddClock(builder, clock):
+def PixelAirDeviceAddClock(builder, clock) -> None:
     builder.PrependUOffsetTRelativeSlot(12, flatbuffers.number_types.UOffsetTFlags.py_type(clock), 0)
 
-def AddClock(builder, clock):
+def AddClock(builder, clock) -> None:
     PixelAirDeviceAddClock(builder, clock)
 
-def PixelAirDeviceAddEngine(builder, engine):
+def PixelAirDeviceAddEngine(builder, engine) -> None:
     builder.PrependUOffsetTRelativeSlot(13, flatbuffers.number_types.UOffsetTFlags.py_type(engine), 0)
 
-def AddEngine(builder, engine):
+def AddEngine(builder, engine) -> None:
     PixelAirDeviceAddEngine(builder, engine)
 
 def PixelAirDeviceEnd(builder):

@@ -4,9 +4,10 @@
 
 import flatbuffers
 from flatbuffers.compat import import_numpy
+
 np = import_numpy()
 
-class Scene(object):
+class Scene:
     __slots__ = ['_tab']
 
     @classmethod
@@ -25,7 +26,7 @@ class Scene(object):
         return flatbuffers.util.BufferHasIdentifier(buf, offset, b"\x50\x41\x30\x31", size_prefixed=size_prefixed)
 
     # Scene
-    def Init(self, buf, pos):
+    def Init(self, buf, pos) -> None:
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Scene
@@ -113,34 +114,34 @@ class Scene(object):
             return obj
         return None
 
-def SceneStart(builder):
+def SceneStart(builder) -> None:
     builder.StartObject(8)
 
-def Start(builder):
+def Start(builder) -> None:
     SceneStart(builder)
 
-def SceneAddLabel(builder, label):
+def SceneAddLabel(builder, label) -> None:
     builder.PrependUOffsetTRelativeSlot(0, flatbuffers.number_types.UOffsetTFlags.py_type(label), 0)
 
-def AddLabel(builder, label):
+def AddLabel(builder, label) -> None:
     SceneAddLabel(builder, label)
 
-def SceneAddIndex(builder, index):
+def SceneAddIndex(builder, index) -> None:
     builder.PrependInt32Slot(1, index, 0)
 
-def AddIndex(builder, index):
+def AddIndex(builder, index) -> None:
     SceneAddIndex(builder, index)
 
-def SceneAddLoadedAnimationIndex(builder, loadedAnimationIndex):
+def SceneAddLoadedAnimationIndex(builder, loadedAnimationIndex) -> None:
     builder.PrependInt32Slot(2, loadedAnimationIndex, 0)
 
-def AddLoadedAnimationIndex(builder, loadedAnimationIndex):
+def AddLoadedAnimationIndex(builder, loadedAnimationIndex) -> None:
     SceneAddLoadedAnimationIndex(builder, loadedAnimationIndex)
 
-def SceneAddAnimations(builder, animations):
+def SceneAddAnimations(builder, animations) -> None:
     builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(animations), 0)
 
-def AddAnimations(builder, animations):
+def AddAnimations(builder, animations) -> None:
     SceneAddAnimations(builder, animations)
 
 def SceneStartAnimationsVector(builder, numElems):
@@ -149,28 +150,28 @@ def SceneStartAnimationsVector(builder, numElems):
 def StartAnimationsVector(builder, numElems):
     return SceneStartAnimationsVector(builder, numElems)
 
-def SceneAddDashboard(builder, dashboard):
+def SceneAddDashboard(builder, dashboard) -> None:
     builder.PrependUOffsetTRelativeSlot(4, flatbuffers.number_types.UOffsetTFlags.py_type(dashboard), 0)
 
-def AddDashboard(builder, dashboard):
+def AddDashboard(builder, dashboard) -> None:
     SceneAddDashboard(builder, dashboard)
 
-def SceneAddActiveAnimationIndex(builder, activeAnimationIndex):
+def SceneAddActiveAnimationIndex(builder, activeAnimationIndex) -> None:
     builder.PrependUOffsetTRelativeSlot(5, flatbuffers.number_types.UOffsetTFlags.py_type(activeAnimationIndex), 0)
 
-def AddActiveAnimationIndex(builder, activeAnimationIndex):
+def AddActiveAnimationIndex(builder, activeAnimationIndex) -> None:
     SceneAddActiveAnimationIndex(builder, activeAnimationIndex)
 
-def SceneAddPalette(builder, palette):
+def SceneAddPalette(builder, palette) -> None:
     builder.PrependUOffsetTRelativeSlot(6, flatbuffers.number_types.UOffsetTFlags.py_type(palette), 0)
 
-def AddPalette(builder, palette):
+def AddPalette(builder, palette) -> None:
     SceneAddPalette(builder, palette)
 
-def SceneAddSchedule(builder, schedule):
+def SceneAddSchedule(builder, schedule) -> None:
     builder.PrependUOffsetTRelativeSlot(7, flatbuffers.number_types.UOffsetTFlags.py_type(schedule), 0)
 
-def AddSchedule(builder, schedule):
+def AddSchedule(builder, schedule) -> None:
     SceneAddSchedule(builder, schedule)
 
 def SceneEnd(builder):

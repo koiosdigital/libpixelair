@@ -1,5 +1,4 @@
-"""
-ARP table utilities for MAC address resolution.
+"""ARP table utilities for MAC address resolution.
 
 This module provides utilities for looking up IP addresses from MAC addresses
 and vice versa using the system's ARP table. This allows Home Assistant to
@@ -24,8 +23,7 @@ _logger = logging.getLogger("pixelair.arp")
 
 @dataclass
 class ArpEntry:
-    """
-    Represents an entry in the ARP table.
+    """Represents an entry in the ARP table.
 
     Attributes:
         ip_address: The IP address.
@@ -40,8 +38,7 @@ class ArpEntry:
 
 
 def normalize_mac(mac: str) -> str:
-    """
-    Normalize a MAC address to lowercase with colons.
+    """Normalize a MAC address to lowercase with colons.
 
     Handles various formats:
     - AA:BB:CC:DD:EE:FF
@@ -73,8 +70,7 @@ def normalize_mac(mac: str) -> str:
 
 
 def _parse_arp_output_darwin(output: str) -> list[ArpEntry]:
-    """
-    Parse macOS `arp -a` output.
+    """Parse macOS `arp -a` output.
 
     Example format:
     ? (192.168.0.1) at aa:bb:cc:dd:ee:ff on en0 ifscope [ethernet]
@@ -111,8 +107,7 @@ def _parse_arp_output_darwin(output: str) -> list[ArpEntry]:
 
 
 def _parse_arp_output_linux(output: str) -> list[ArpEntry]:
-    """
-    Parse Linux `arp -a` or `ip neigh` output.
+    """Parse Linux `arp -a` or `ip neigh` output.
 
     arp -a format:
     hostname (192.168.0.1) at aa:bb:cc:dd:ee:ff [ether] on eth0
@@ -164,8 +159,7 @@ def _parse_arp_output_linux(output: str) -> list[ArpEntry]:
 
 
 async def get_arp_table() -> list[ArpEntry]:
-    """
-    Get the current system ARP table.
+    """Get the current system ARP table.
 
     This function reads the ARP table from the operating system and returns
     a list of entries. Works on macOS and Linux.
@@ -227,8 +221,7 @@ async def get_arp_table() -> list[ArpEntry]:
 
 
 async def lookup_ip_by_mac(mac_address: str) -> str | None:
-    """
-    Look up an IP address by MAC address in the ARP table.
+    """Look up an IP address by MAC address in the ARP table.
 
     Args:
         mac_address: The MAC address to look up (any common format).
@@ -255,8 +248,7 @@ async def lookup_ip_by_mac(mac_address: str) -> str | None:
 
 
 async def lookup_mac_by_ip(ip_address: str) -> str | None:
-    """
-    Look up a MAC address by IP address in the ARP table.
+    """Look up a MAC address by IP address in the ARP table.
 
     Args:
         ip_address: The IP address to look up.
@@ -277,8 +269,7 @@ async def lookup_mac_by_ip(ip_address: str) -> str | None:
 
 
 async def warm_arp_cache(ip_address: str) -> bool:
-    """
-    Attempt to warm the ARP cache for a given IP address.
+    """Attempt to warm the ARP cache for a given IP address.
 
     Sends a UDP packet to the device to trigger ARP resolution.
     This is useful before looking up a MAC address.

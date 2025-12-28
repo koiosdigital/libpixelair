@@ -1,5 +1,4 @@
-"""
-PixelAir device data types.
+"""PixelAir device data types.
 
 This module contains all data classes and enums used to represent device state
 and configuration. These are the public types exposed by the library.
@@ -20,8 +19,7 @@ class DeviceMode(IntEnum):
 
 @dataclass
 class SceneInfo:
-    """
-    Information about a scene available on the device.
+    """Information about a scene available on the device.
 
     Attributes:
         label: The scene name (e.g., "Sunset", "Ocean").
@@ -33,8 +31,7 @@ class SceneInfo:
 
 @dataclass
 class EffectInfo:
-    """
-    Information about an available effect.
+    """Information about an available effect.
 
     Effects are presented to Home Assistant and users. They abstract away
     the underlying mode (Auto/Scene/Manual) and provide a clean interface.
@@ -49,8 +46,7 @@ class EffectInfo:
 
 @dataclass
 class PaletteState:
-    """
-    Palette (hue/saturation) state for a mode.
+    """Palette (hue/saturation) state for a mode.
 
     Values are floats from 0.0 to 1.0.
     """
@@ -60,8 +56,7 @@ class PaletteState:
 
 @dataclass
 class PaletteRoutes:
-    """
-    OSC routes for palette (hue/saturation) control within a mode.
+    """OSC routes for palette (hue/saturation) control within a mode.
 
     Each mode (Auto, Scene, Manual) has its own palette with separate routes.
     """
@@ -71,8 +66,7 @@ class PaletteRoutes:
 
 @dataclass
 class ControlRoutes:
-    """
-    OSC routes for controlling device parameters.
+    """OSC routes for controlling device parameters.
 
     These routes are extracted from the device's FlatBuffer state and are
     used to send control commands. Routes are obfuscated strings that are
@@ -105,8 +99,7 @@ ANIMATION_MODEL_PREFIXES = {
 
 
 def _get_animation_display_name(animation_id: str) -> str:
-    """
-    Extract the display name from an animation ID.
+    """Extract the display name from an animation ID.
 
     Animation IDs have format "prefix::name" (e.g., "fluora::Rainbow").
     This extracts just the name part.
@@ -123,8 +116,7 @@ def _get_animation_display_name(animation_id: str) -> str:
 
 
 def _is_animation_compatible(animation_id: str, model: str | None) -> bool:
-    """
-    Check if an animation is compatible with a device model.
+    """Check if an animation is compatible with a device model.
 
     Args:
         animation_id: The animation ID (with prefix).
@@ -151,8 +143,7 @@ def _is_animation_compatible(animation_id: str, model: str | None) -> bool:
 
 @dataclass
 class DeviceState:
-    """
-    Represents the current state of a PixelAir device.
+    """Represents the current state of a PixelAir device.
 
     This is a simplified view of the device state extracted from the
     FlatBuffer state packet.
@@ -230,8 +221,7 @@ class DeviceState:
 
     @property
     def effects(self) -> list[EffectInfo]:
-        """
-        Get the list of available effects with IDs and display names.
+        """Get the list of available effects with IDs and display names.
 
         Returns:
             List of EffectInfo objects.

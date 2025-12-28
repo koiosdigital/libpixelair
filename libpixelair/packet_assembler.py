@@ -1,5 +1,4 @@
-"""
-Packet Assembler for PixelAir fragmented UDP packets.
+"""Packet Assembler for PixelAir fragmented UDP packets.
 
 PixelAir devices send large state payloads as fragmented UDP packets.
 Each fragment has a 4-byte header:
@@ -16,9 +15,10 @@ fragments into complete payloads and invokes a callback when ready.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
-from dataclasses import dataclass, field
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass, field
 
 # Header byte that marks a fragmented packet
 FRAGMENT_HEADER_MARKER = 0x46  # 'F'
@@ -43,8 +43,7 @@ def _get_monotonic_time() -> float:
 
 @dataclass
 class FragmentBuffer:
-    """
-    Buffer for collecting fragments of a single response.
+    """Buffer for collecting fragments of a single response.
 
     Attributes:
         counter: The counter value grouping these fragments.
@@ -58,8 +57,7 @@ class FragmentBuffer:
     created_at: float = field(default_factory=_get_monotonic_time)
 
     def add_fragment(self, index: int, payload: bytes) -> bool:
-        """
-        Add a fragment to this buffer.
+        """Add a fragment to this buffer.
 
         Args:
             index: The fragment index (0-based).
@@ -74,8 +72,7 @@ class FragmentBuffer:
         return len(self.fragments) == self.total_fragments
 
     def is_complete(self) -> bool:
-        """
-        Check if all fragments have been received.
+        """Check if all fragments have been received.
 
         Returns:
             True if all fragments are present.
@@ -83,8 +80,7 @@ class FragmentBuffer:
         return len(self.fragments) == self.total_fragments
 
     def is_expired(self, timeout: float = DEFAULT_FRAGMENT_TIMEOUT) -> bool:
-        """
-        Check if this buffer has expired.
+        """Check if this buffer has expired.
 
         Args:
             timeout: Maximum age in seconds before expiration.
@@ -95,8 +91,7 @@ class FragmentBuffer:
         return _get_monotonic_time() - self.created_at > timeout
 
     def assemble(self) -> bytes | None:
-        """
-        Assemble all fragments into a complete payload.
+        """Assemble all fragments into a complete payload.
 
         Returns:
             The complete payload bytes if all fragments are present,
@@ -114,8 +109,7 @@ class FragmentBuffer:
 
     @property
     def received_count(self) -> int:
-        """
-        Get the number of fragments received so far.
+        """Get the number of fragments received so far.
 
         Returns:
             Count of received fragments.
@@ -157,9 +151,8 @@ class PacketAssembler:
         callback: CompletionCallback,
         fragment_timeout: float = DEFAULT_FRAGMENT_TIMEOUT,
         cleanup_interval: float = 1.0
-    ):
-        """
-        Initialize the packet assembler.
+    ) -> None:
+        """Initialize the packet assembler.
 
         Args:
             callback: Function to call when a complete payload is assembled.
@@ -187,8 +180,7 @@ class PacketAssembler:
 
     @property
     def pending_count(self) -> int:
-        """
-        Get the number of pending fragment buffers.
+        """Get the number of pending fragment buffers.
 
         Returns:
             Count of buffers awaiting completion.
@@ -197,8 +189,7 @@ class PacketAssembler:
 
     @property
     def stats(self) -> dict[str, int]:
-        """
-        Get assembler statistics.
+        """Get assembler statistics.
 
         Returns:
             Dictionary with counts of complete, expired, and invalid packets.
@@ -211,8 +202,7 @@ class PacketAssembler:
         }
 
     async def start(self) -> None:
-        """
-        Start the packet assembler.
+        """Start the packet assembler.
 
         This starts the background cleanup task for expired fragments.
 
@@ -227,8 +217,7 @@ class PacketAssembler:
         self._logger.debug("PacketAssembler started")
 
     async def stop(self) -> None:
-        """
-        Stop the packet assembler.
+        """Stop the packet assembler.
 
         This stops the cleanup task and clears all pending buffers.
         """
@@ -239,10 +228,8 @@ class PacketAssembler:
 
         if self._cleanup_task:
             self._cleanup_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
             self._cleanup_task = None
 
         async with self._lock:
@@ -255,8 +242,7 @@ class PacketAssembler:
         data: bytes,
         source_address: tuple[str, int]
     ) -> bool:
-        """
-        Process an incoming UDP packet.
+        """Process an incoming UDP packet.
 
         This method handles both single-fragment and multi-fragment packets.
         When a complete payload is assembled, the callback is invoked.
@@ -275,7 +261,7 @@ class PacketAssembler:
             return False
 
         # Parse header
-        header = data[0]
+        data[0]
         counter = data[1]
         total_fragments = data[2]
         fragment_index = data[3]
@@ -350,8 +336,7 @@ class PacketAssembler:
         return False
 
     def _validate_packet(self, data: bytes) -> bool:
-        """
-        Validate packet structure.
+        """Validate packet structure.
 
         Args:
             data: The raw packet data.
@@ -390,8 +375,7 @@ class PacketAssembler:
         return True
 
     async def _invoke_callback(self, payload: bytes) -> None:
-        """
-        Invoke the completion callback.
+        """Invoke the completion callback.
 
         Args:
             payload: The complete assembled payload.
@@ -404,9 +388,7 @@ class PacketAssembler:
             self._logger.exception("Callback raised exception: %s", e)
 
     async def _cleanup_loop(self) -> None:
-        """
-        Background task that periodically cleans up expired fragments.
-        """
+        """Background task that periodically cleans up expired fragments."""
         while self._running:
             try:
                 await asyncio.sleep(self._cleanup_interval)
@@ -417,9 +399,7 @@ class PacketAssembler:
                 self._logger.exception("Cleanup loop error: %s", e)
 
     async def _cleanup_expired(self) -> None:
-        """
-        Remove expired fragment buffers.
-        """
+        """Remove expired fragment buffers."""
         async with self._lock:
             expired_keys = [
                 key for key, buffer in self._buffers.items()
@@ -439,16 +419,13 @@ class PacketAssembler:
                 )
 
     def reset_stats(self) -> None:
-        """
-        Reset the assembler statistics to zero.
-        """
+        """Reset the assembler statistics to zero."""
         self._complete_count = 0
         self._expired_count = 0
         self._invalid_count = 0
 
-    async def __aenter__(self) -> "PacketAssembler":
-        """
-        Async context manager entry.
+    async def __aenter__(self) -> PacketAssembler:
+        """Async context manager entry.
 
         Returns:
             The PacketAssembler instance after starting.
@@ -462,8 +439,7 @@ class PacketAssembler:
         exc_val: BaseException | None,
         exc_tb: object,
     ) -> None:
-        """
-        Async context manager exit.
+        """Async context manager exit.
 
         Stops the assembler on exit.
         """
