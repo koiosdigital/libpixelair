@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "libpixelair"
-version = "0.3.0"
+version = "0.3.1"
 description = "Python client library for PixelAir LED devices (Fluora, Monos)"
 authors = ["Aiden Vigue <aiden.vigue@koiosdigital.net>"]
 readme = "README.md"
