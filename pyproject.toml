@@ -34,9 +34,9 @@ pytest-cov = "^6.0"
 ruff = "^0.8"
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^8.1"
+sphinx = ">=7.2,<8.2"
 sphinx-rtd-theme = "^3.0"
-sphinx-autodoc-typehints = "^2.5"
+sphinx-autodoc-typehints = "^2.3"
 myst-parser = "^4.0"
 
 [tool.poetry.scripts]

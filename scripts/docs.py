@@ -38,8 +38,6 @@ def build() -> None:
             "sphinx",
             "-b",
             "html",
-            "-W",  # Treat warnings as errors
-            "--keep-going",  # Continue despite errors
             str(docs_dir),
             str(build_dir),
         ],

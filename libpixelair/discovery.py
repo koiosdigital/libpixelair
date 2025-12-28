@@ -225,8 +225,7 @@ class DiscoveryHandler(PacketHandler):
 
 
 class DiscoveryService:
-    """
-    Service for discovering PixelAir devices on the local network.
+    """Service for discovering PixelAir devices on the local network.
 
     This service broadcasts discovery messages on all available network
     interfaces and collects responses from PixelAir devices. It provides
@@ -236,12 +235,12 @@ class DiscoveryService:
     receiving packets. This allows multiple services to share the same
     listener.
 
-    For Home Assistant integration, use discover_with_info() to get full
-    device information including MAC addresses, or use resolve_mac_to_ip()
+    For Home Assistant integration, use ``discover_with_info()`` to get full
+    device information including MAC addresses, or use ``resolve_mac_to_ip()``
     to find devices by their MAC address.
 
-    Example:
-        ```python
+    Example::
+
         async def main():
             async with UDPListener() as listener:
                 discovery = DiscoveryService(listener)
@@ -257,7 +256,6 @@ class DiscoveryService:
                 ip = await discovery.resolve_mac_to_ip("aa:bb:cc:dd:ee:ff")
                 if ip:
                     device = await discovery.verify_device(ip)
-        ```
     """
 
     def __init__(self, listener: UDPListener):

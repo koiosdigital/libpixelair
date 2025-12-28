@@ -155,8 +155,7 @@ class UDPProtocol(asyncio.DatagramProtocol):
 
 
 class UDPListener:
-    """
-    Async UDP listener for receiving PixelAir device packets.
+    """Async UDP listener for receiving PixelAir device packets.
 
     This class manages a UDP socket bound to port 12345 on all available
     network interfaces. It provides a clean async interface for registering
@@ -165,8 +164,8 @@ class UDPListener:
     The listener is designed to be reusable and can be shared across multiple
     components that need to receive UDP packets from PixelAir devices.
 
-    Example:
-        ```python
+    Example::
+
         async def main():
             listener = UDPListener()
             await listener.start()
@@ -179,7 +178,6 @@ class UDPListener:
 
             # Clean up
             await listener.stop()
-        ```
     """
 
     def __init__(

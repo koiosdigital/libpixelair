@@ -128,8 +128,7 @@ type CompletionCallback = Callable[[bytes], None] | Callable[[bytes], Awaitable[
 
 
 class PacketAssembler:
-    """
-    Assembles fragmented PixelAir packets into complete payloads.
+    """Assembles fragmented PixelAir packets into complete payloads.
 
     This class handles the reassembly of fragmented UDP packets from PixelAir
     devices. It maintains buffers for in-progress reassembly and invokes a
@@ -138,8 +137,8 @@ class PacketAssembler:
     The assembler automatically cleans up expired fragment buffers to prevent
     memory leaks from incomplete transmissions.
 
-    Example:
-        ```python
+    Example::
+
         async def on_complete(payload: bytes):
             print(f"Received complete payload: {len(payload)} bytes")
 
@@ -151,7 +150,6 @@ class PacketAssembler:
 
         # Clean up
         await assembler.stop()
-        ```
     """
 
     def __init__(

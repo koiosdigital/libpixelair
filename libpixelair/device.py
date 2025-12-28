@@ -69,20 +69,20 @@ type StateChangeCallback = (
 
 
 class PixelAirDevice:
-    """
-    A PixelAir device controller.
+    """A PixelAir device controller.
 
     Provides methods to control device power, brightness, hue, saturation,
     and effects. Devices are identified by MAC address and serial number
     for reliable reconnection.
 
     Use classmethods to create instances:
-    - from_identifiers(): From stored MAC/serial (Home Assistant)
-    - from_discovered(): From a discovery result
-    - from_mac_address(): From MAC only (will discover serial)
 
-    Example:
-        ```python
+    * ``from_identifiers()``: From stored MAC/serial (Home Assistant)
+    * ``from_discovered()``: From a discovery result
+    * ``from_mac_address()``: From MAC only (will discover serial)
+
+    Example::
+
         async with UDPListener() as listener:
             device = await PixelAirDevice.from_identifiers(
                 mac_address="aa:bb:cc:dd:ee:ff",
@@ -94,7 +94,6 @@ class PixelAirDevice:
                     state = await device.get_state()
                     print(f"Brightness: {state.brightness}")
                     await device.set_brightness(0.5)
-        ```
     """
 
     def __init__(
