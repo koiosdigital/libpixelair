@@ -6,3 +6,4 @@ env/
 .venv/
 CLAUDE.md
 .claude
+docs/_build/
